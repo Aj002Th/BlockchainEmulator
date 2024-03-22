@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// BlockHeader 区块头
 type BlockHeader struct {
 	ParentBlockHash []byte    // 父区块哈希
 	StateRoot       []byte    // 状态树根哈希
@@ -45,5 +46,42 @@ func (bh *BlockHeader) Hash() []byte {
 	return hash[:]
 }
 
+// Block 区块
 type Block struct {
+	Header *BlockHeader
+	Body   []*Transaction
+	Hash   []byte
+}
+
+// NewBlock 创建区块
+// 调用前需要保证区块头中的信息完善且正确
+func NewBlock(header *BlockHeader, body []*Transaction) *Block {
+	block := &Block{
+		Header: header,
+		Body:   body,
+	}
+	block.Hash = block.Header.Hash()
+	return block
+}
+
+// Encode 对Block进行编码
+func (b *Block) Encode() []byte {
+	var buff bytes.Buffer
+	enc := gob.NewEncoder(&buff)
+	err := enc.Encode(b)
+	if err != nil {
+		log.Panic(err)
+	}
+	return buff.Bytes()
+}
+
+// DecodeBlock 对Block进行解码
+func DecodeBlock(b []byte) *Block {
+	var block Block
+	decoder := gob.NewDecoder(bytes.NewReader(b))
+	err := decoder.Decode(&block)
+	if err != nil {
+		log.Panic(err)
+	}
+	return &block
 }
