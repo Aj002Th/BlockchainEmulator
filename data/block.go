@@ -55,6 +55,7 @@ type Block struct {
 
 // NewBlock 创建区块
 // 调用前需要保证区块头中的信息完善且正确
+// 创建后不应进行修改操作, 否则哈希结果出错
 func NewBlock(header *BlockHeader, body []*Transaction) *Block {
 	block := &Block{
 		Header: header,
