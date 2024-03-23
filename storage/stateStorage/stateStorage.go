@@ -6,5 +6,5 @@ type StateStorage interface {
 	Has([]byte) bool
 	Delete([]byte) error
 	BatchPut([][2][]byte) error
-	Close()
+	Close() error
 }

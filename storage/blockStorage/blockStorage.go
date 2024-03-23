@@ -10,4 +10,5 @@ type BlockStorage interface {
 	GetBlockHeader(blockHash []byte) (*base.BlockHeader, error)
 	GetBlock(blockHash []byte) (*base.Block, error)
 	GetNewestBlockHash() ([]byte, error)
+	Close() error
 }

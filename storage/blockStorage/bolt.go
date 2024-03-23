@@ -173,3 +173,7 @@ func (s *BoltStorage) GetNewestBlockHash() ([]byte, error) {
 	})
 	return nbh, err
 }
+
+func (s *BoltStorage) Close() error {
+	return s.DB.Close()
+}

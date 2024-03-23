@@ -67,4 +67,6 @@ func (kv *MemKVStore) BatchPut(kvs [][2][]byte) error {
 	return nil
 }
 
-func (kv *MemKVStore) Close() {}
+func (kv *MemKVStore) Close() error {
+	return nil
+}

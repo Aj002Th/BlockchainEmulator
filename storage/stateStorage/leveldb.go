@@ -39,6 +39,6 @@ func (db *LevelDB) BatchPut(kvs [][2][]byte) error {
 	return db.backend.Write(batch, nil)
 }
 
-func (db *LevelDB) Close() {
-	db.backend.Close()
+func (db *LevelDB) Close() error {
+	return db.backend.Close()
 }
