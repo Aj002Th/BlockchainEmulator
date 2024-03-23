@@ -330,3 +330,7 @@ func (t *Trie) Deserialize(data []byte) error {
 	}
 	return nil
 }
+
+func (t *Trie) Close() error {
+	return t.kv.Close()
+}

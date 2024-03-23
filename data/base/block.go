@@ -13,7 +13,7 @@ type BlockHeader struct {
 	ParentBlockHash []byte    // 父区块哈希
 	StateRoot       []byte    // 状态树根哈希
 	TxRoot          []byte    // 交易的哈希
-	Number          uint64    // 区块中包含的交易数量
+	Number          uint64    // 表明该区块是区块链中的第几个区块
 	Time            time.Time // 区块创建时间
 	Miner           uint64    // 区块创建节点
 }
