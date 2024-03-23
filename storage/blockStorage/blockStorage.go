@@ -1,9 +1,9 @@
-package storage
+package blockStorage
 
 import "github.com/Aj002Th/BlockchainEmulator/data/base"
 
-// Storage 储存层对外提供的能力
-type Storage interface {
+// BlockStorage 针对区块的持久针对的持久针对的持久针对的持久针对的持久针对的持久针对的持久针对的持久针对的持久化存储
+type BlockStorage interface {
 	UpdateNewestBlock(newestBlockHash []byte)
 	AddBlockHeader(blockHash []byte, bh *base.BlockHeader)
 	AddBlock(block *base.Block)
