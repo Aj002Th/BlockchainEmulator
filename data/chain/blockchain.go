@@ -265,67 +265,13 @@ func (bc *BlockChain) CloseBlockChain() {
 }
 
 // NewBlockChain 创建区块链
-// 至少需要使用两个 option 来设置 stateStorage 和 blockStorage
-// for example:
-//
-//	NewBlockChain(
-//			conf,
-//			WithStateStorageLevelDB("./storage/stateStorage"),
-//			WithBlockStorageBolt(conf.NodeID)
-//			)
-func NewBlockChain(conf *Config, opts ...Option) (*BlockChain, error) {
+func NewBlockChain(conf *Config, stateDB stateStorage.StateStorage, blockDB blockStorage.BlockStorage) (*BlockChain, error) {
 	fmt.Println("Generating a new blockchain")
-	bc := &BlockChain{
-		Config:          conf,
-		TransactionPool: base.NewTransactionPool(),
-		CurrentBlock:    nil,
-		Trie:            nil,
-		BlockStorage:    nil,
-		StateStorage:    nil,
-	}
-
-	// 注入配置(暂时主要为 storage)
-	for _, opt := range opts {
-		opt(bc)
-	}
-
-	// 创建状态树
-	bc.Trie = mpt.New(nil, bc.StateStorage)
-
-	// 如果区块链是空的, 则创建创世区块
-	curHash, err := bc.BlockStorage.GetNewestBlockHash()
-	if err != nil {
-		fmt.Println("Get newest block hash err")
-		// 如果是没能找到最新区块的hash，那么说明这个存储里面是空的，需要创建创世区块
-		if err.Error() == "cannot find the newest block hash" {
-			genisisBlock := bc.NewGenisisBlock()
-			bc.AddGenisisBlock(genisisBlock)
-			fmt.Println("New genisis block")
-			return bc, nil
-		}
-		log.Panic(err)
-	}
-
-	// 获取最新的区块作为链尾
-	fmt.Println("Existing blockchain found")
-	curb, err := bc.BlockStorage.GetBlock(curHash)
-	if err != nil {
-		log.Panic(err)
-	}
-	bc.CurrentBlock = curb
-
-	fmt.Println("The status trie can be built")
-	fmt.Println("Generated a new blockchain successfully")
-	return bc, nil
-}
-
-// NewBlockChainWithDB 创建区块链
-func NewBlockChainWithDB(conf *Config, stateDB stateStorage.StateStorage, blockDB blockStorage.BlockStorage) (*BlockChain, error) {
-	fmt.Println("Generating a new blockchain", stateDB)
 	bc := &BlockChain{
 		Config:          conf,
 		CurrentBlock:    nil,
 		BlockStorage:    blockDB,
+		StateStorage:    stateDB,
 		Trie:            mpt.New(nil, stateDB),
 		TransactionPool: base.NewTransactionPool(),
 	}
@@ -351,10 +297,6 @@ func NewBlockChainWithDB(conf *Config, stateDB stateStorage.StateStorage, blockD
 		log.Panic(err)
 	}
 	bc.CurrentBlock = curb
-
-	// 创建状态树
-	trie := mpt.New(nil, stateDB)
-	bc.Trie = trie
 
 	fmt.Println("The status trie can be built")
 	fmt.Println("Generated a new blockchain successfully")
