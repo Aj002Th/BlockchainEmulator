@@ -64,6 +64,8 @@ func (d *Supervisor) NewSupervisor(ip string, pcc *chain.Config, committeeMethod
 
 	d.Ss = signal.NewStopSignal(2 * int(params.ShardNum))
 
+	d.blockPostedSignal = sig.NewAsyncSignalImpl[pbft.BlockInfoMsg]("xx")
+
 	switch committeeMethod {
 	default:
 		d.comMod = committee.NewRelayCommitteeModule(d.Ip_nodeTable, d.Ss, d.sl, params.FileInput, params.TotalDataSize, params.BatchSize)

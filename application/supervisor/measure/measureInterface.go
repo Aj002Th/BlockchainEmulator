@@ -13,6 +13,7 @@ func GetByName(name string) MeasureModule {
 	case "TxNumberCount_Relay":
 		return (NewTestTxNumCount_Relay())
 	default:
+		panic("Wrong Measure Name")
 		return nil
 	}
 }

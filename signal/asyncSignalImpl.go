@@ -20,7 +20,14 @@ type AsyncSignalImpl[DATA any] struct {
 	outChannels map[*func(data DATA)]Val[DATA]
 }
 
-func (self *AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时候只准传函数和lambda，不准传方法。
+func NewAsyncSignalImpl[DATA any](name string) AsyncSignalImpl[DATA] {
+	return AsyncSignalImpl[DATA]{
+		name:        name,
+		outChannels: make(map[*func(data DATA)]Val[DATA]),
+	}
+}
+
+func (self AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时候只准传函数和lambda，不准传方法。
 
 	val := NewVal[DATA]()
 	self.outChannels[&cb] = val
@@ -38,13 +45,13 @@ func (self *AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时�
 }
 
 // 返回值：操作是否成功
-func (self *AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
+func (self AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
 	self.outChannels[&cb].cc <- 1 // 发送Cancel Token
 	delete(self.outChannels, &cb)
 	return true
 }
 
-func (self *AsyncSignalImpl[DATA]) Emit(data DATA) {
+func (self AsyncSignalImpl[DATA]) Emit(data DATA) {
 	for _, val := range self.outChannels {
 		val.cd <- data
 	}
