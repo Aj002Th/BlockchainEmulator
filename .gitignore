@@ -26,4 +26,8 @@ go.work
 .ide/
 .idea/
 
+# db files
+*.db
+*.db.lock
+
 

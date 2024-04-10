@@ -131,3 +131,11 @@ func readMessage(buffer *bytes.Buffer) (string, error) {
 	}
 	return string(message), nil
 }
+
+// 创建一个TcpDial方便使用
+var TcpDial = func() func(context []byte, addr string) {
+	t := NewTcpCustomProtocolNetwork()
+	return t.Send
+}()
+
+var Tcp = NewTcpCustomProtocolNetwork()

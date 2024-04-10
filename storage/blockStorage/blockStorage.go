@@ -2,7 +2,7 @@ package blockStorage
 
 import "github.com/Aj002Th/BlockchainEmulator/data/base"
 
-// BlockStorage 针对区块的持久针对的持久针对的持久针对的持久针对的持久针对的持久针对的持久针对的持久针对的持久化存储
+// BlockStorage 针对区块的持久化存储
 type BlockStorage interface {
 	UpdateNewestBlock(newestBlockHash []byte)
 	AddBlockHeader(blockHash []byte, bh *base.BlockHeader)
