@@ -1,3 +1,8 @@
+//go:build wireinject
+// +build wireinject
+
+package boot
+
 // Copyright 2018 The Wire Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +17,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The greeter binary simulates an event with greeters greeting guests.
-package main
+// The build tag makes sure the stub is not built in the final build.
 
-import (
-	"fmt"
-	"os"
+// 从Wire官方教程抄来
+// 第一句是必须的。保证不会被编译的时候包含进来。而是留给wire的板子。
 
-	"github.com/Aj002Th/BlockchainEmulator/boot"
-)
+import "github.com/google/wire"
 
-func main() {
-	app, err := boot.InitializeApp()
-	if err != nil {
-		fmt.Printf("failed to create app: %s\n", err)
-		os.Exit(2)
-	}
-	app.Run()
+func InitializeApp() (App, error) {
+	wire.Build(NewApp, ParseAndBuildArg)
+	return App{}, nil
 }
