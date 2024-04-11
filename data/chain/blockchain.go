@@ -134,16 +134,7 @@ func (bc *BlockChain) GenerateBlock() *base.Block {
 // NewGenisisBlock 生成创世区块, 每条区块链只会有一个创世区块
 func (bc *BlockChain) NewGenisisBlock() *base.Block {
 	body := make([]*base.Transaction, 0)
-	trie := mpt.New(nil, bc.StateStorage)
-	bc.Trie = trie
-	bh := &base.BlockHeader{
-		ParentBlockHash: nil,
-		StateRoot:       trie.RootHash(),
-		TxRoot:          GetTxTreeRoot(body),
-		Number:          0,
-		Time:            time.Now(),
-		Miner:           0,
-	}
+	bh := &base.BlockHeader{}
 	b := base.NewBlock(bh, body)
 	b.Hash = b.Header.Hash()
 	return b
