@@ -4,5 +4,6 @@ package network
 type Network interface {
 	Send(context []byte, addr string)
 	Broadcast(sender string, receivers []string, msg []byte)
+	Receive()
 	Close()
 }
