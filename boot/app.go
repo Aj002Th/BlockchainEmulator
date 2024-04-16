@@ -2,10 +2,16 @@ package boot
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path"
 	"runtime"
+	"runtime/trace"
+	"time"
+
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor"
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 )
 
 func getAbsPath() string {
@@ -17,27 +23,6 @@ func getAbsPath() string {
 	return abPath
 }
 
-func batch_start(nodeNum, shardNum, modID int) {
-	var absolute_path = getAbsPath()
-	os.Chdir(absolute_path)
-	// node = 1..n, shard = 0..n
-	for i := 1; i < nodeNum; i++ {
-		for j := 0; j < shardNum; j++ {
-			cmdNormNodes := fmt.Sprintf("go run main.go -n %d -N %d -s %d -S %d -m %d \n\n", i, nodeNum, j, shardNum, modID)
-			exec.Command(cmdNormNodes)
-		}
-	}
-	// supervisor
-	cmdSup := fmt.Sprintf("go run main.go -c -N %d -S %d -m %d \n\n", nodeNum, shardNum, modID)
-	exec.Command(cmdSup)
-
-	// node = 0, shrad = 0..n
-	for j := 0; j < shardNum; j++ {
-		cmdMainNodes := fmt.Sprintf("go run main.go -n 0 -N %d -s %d -S %d -m %d \n\n", nodeNum, j, shardNum, modID)
-		exec.Command(cmdMainNodes)
-	}
-}
-
 type App struct {
 	args Args
 }
@@ -47,14 +32,44 @@ func NewApp(a Args) App {
 }
 
 func (self *App) Run() {
-	if self.args.isGen {
-		batch_start(self.args.nodeNum, self.args.shardNum, self.args.modID)
-		return
+
+	var f *os.File
+	var err error
+	if self.args.isClient {
+		f, err = os.Create("traceSup.out")
+	} else {
+		f, err = os.Create(fmt.Sprintf("traceNode%d.out", self.args.nodeID))
 	}
+	if err != nil {
+		log.Fatalf("failed to create trace output file: %v", err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatalf("failed to close trace file: %v", err)
+		}
+	}()
+
+	if err := trace.Start(f); err != nil {
+		log.Fatalf("failed to start trace: %v", err)
+	}
+	defer trace.Stop()
 
 	if self.args.isClient {
-		BuildSupervisor(uint64(self.args.nodeNum), uint64(self.args.shardNum), uint64(self.args.modID))
+		if self.args.frontend {
+			webapi.G_Proxy = webapi.NewGoodApiProxy()
+			webapi.RunApiServer()
+			webapi.RunFrontendServer()
+			go exec.Command("start", "http://localhost:3000") // 把浏览器拉起来
+		} else {
+			webapi.G_Proxy = webapi.DumbProxy{}
+		}
+
+		webapi.G_Proxy.Enqueue(webapi.Hello)
+
+		sup := supervisor.NewSupervisor()
+		time.Sleep(10000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
+		sup.Run()
 	} else {
-		BuildNewPbftNode(uint64(self.args.nodeID), uint64(self.args.nodeNum), uint64(self.args.shardID), uint64(self.args.shardNum), uint64(self.args.modID))
+		BuildNewPbftNode(uint64(self.args.nodeID), uint64(self.args.nodeNum))
 	}
 }

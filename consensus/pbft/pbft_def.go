@@ -4,11 +4,14 @@ package pbft
 
 import (
 	"bufio"
+	"encoding/json"
 	"io"
 	"log"
 	"net"
 	"sync"
+	"time"
 
+	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
 	"github.com/Aj002Th/BlockchainEmulator/misc"
 	"github.com/Aj002Th/BlockchainEmulator/network"
@@ -70,94 +73,113 @@ type PbftConsensusNode struct {
 }
 
 // generate a pbft consensus for a node
-func NewPbftNode(shardID, nodeID uint64, pcc *chain.Config, messageHandleType string) *PbftConsensusNode {
-	p := new(PbftConsensusNode)
-	p.ip_nodeTable = params.IPmap_nodeTable
-	p.node_nums = pcc.Nodes_perShard
-	p.ShardID = shardID
-	p.NodeID = nodeID
-	p.pbftChainConfig = pcc
-	// fp := "./record/ldb/s" + strconv.FormatUint(shardID, 10) + "/n" + strconv.FormatUint(nodeID, 10)
+func NewPbftNode(nodeID uint64, pcc *chain.Config, messageHandleType string) *PbftConsensusNode {
+	self := new(PbftConsensusNode)
+	self.ip_nodeTable = params.IPmap_nodeTable
+	self.node_nums = pcc.Nodes_perShard
+	self.ShardID = 0
+	self.NodeID = nodeID
+	self.pbftChainConfig = pcc
 	var err error
-	p.db = blockStorage.NewBoltStorage(uint(nodeID))
-	p.sb = stateStorage.NewMemKVStore()
+	self.db = blockStorage.NewBoltStorage(uint(nodeID))
+	self.sb = stateStorage.NewMemKVStore()
 	if err != nil {
 		log.Panic(err)
 	}
-	p.CurChain, err = chain.NewBlockChain(pcc, p.sb, p.db)
+	self.CurChain, err = chain.NewBlockChain(pcc, self.sb, self.db)
 	if err != nil {
 		log.Panic("cannot new a blockchain")
 	}
 
-	p.RunningNode = &Node{
+	self.RunningNode = &Node{
 		NodeID:  nodeID,
-		ShardID: shardID,
-		IPaddr:  p.ip_nodeTable[shardID][nodeID],
+		ShardID: 0,
+		IPaddr:  self.ip_nodeTable[0][nodeID],
 	}
 
-	p.stop = false
-	p.sequenceID = p.CurChain.CurrentBlock.Header.Number + 1
-	p.pStop = make(chan uint64)
-	p.requestPool = make(map[string]*Request)
-	p.cntPrepareConfirm = make(map[string]map[*Node]bool)
-	p.cntCommitConfirm = make(map[string]map[*Node]bool)
-	p.isCommitBordcast = make(map[string]bool)
-	p.isReply = make(map[string]bool)
-	p.height2Digest = make(map[uint64]string)
-	p.malicious_nums = (p.node_nums - 1) / 3
-	p.view = 0
+	self.stop = false
+	self.sequenceID = self.CurChain.CurrentBlock.Header.Number + 1
+	self.pStop = make(chan uint64)
+	self.requestPool = make(map[string]*Request)
+	self.cntPrepareConfirm = make(map[string]map[*Node]bool)
+	self.cntCommitConfirm = make(map[string]map[*Node]bool)
+	self.isCommitBordcast = make(map[string]bool)
+	self.isReply = make(map[string]bool)
+	self.height2Digest = make(map[uint64]string)
+	self.malicious_nums = (self.node_nums - 1) / 3
+	self.view = 0
 
-	p.seqIDMap = make(map[uint64]uint64)
+	self.seqIDMap = make(map[uint64]uint64)
 
-	p.pl = misc.NewPbftLog(shardID, nodeID)
+	self.pl = misc.NewPbftLog(0, nodeID)
+
+	base.NodeLog = self.pl
 
 	// choose how to handle the messages in pbft or beyond pbft
 	switch string(messageHandleType) {
 	default:
-		p.ihm = &RawRelayPbftExtraHandleMod{
-			pbftNode: p,
+		self.ihm = &RawRelayPbftExtraHandleMod{
+			node: self,
 		}
-		p.ohm = &RawRelayOutsideModule{
-			pbftNode: p,
+		self.ohm = &RawRelayOutsideModule{
+			node: self,
 		}
 	}
 
-	return p
+	return self
+}
+
+func dispatchHelper[T any](content []byte, handler func(*T)) {
+	message := new(T)
+	err := json.Unmarshal(content, message)
+	if err != nil {
+		log.Panic(err)
+	}
+	handler(message)
 }
 
 // handle the raw message, send it to corresponded interfaces
-func (p *PbftConsensusNode) handleMessage(msg []byte) {
+// 还没反序列化。根据他的奇葩协议要做派发。不是在这里反序列化的。
+func (self *PbftConsensusNode) dispatchMessage(msg []byte) {
 	msgType, content := SplitMessage(msg)
+	if len(content) > 2000 {
+		self.pl.Printf("Received a %v: %v\n", msgType, string(content[:2000]))
+	} else {
+		self.pl.Printf("Received a %v: %v\n", msgType, string(content))
+	}
 	switch msgType {
 	// pbft inside message type
 	case CPrePrepare:
-		p.handlePrePrepare(content)
+		dispatchHelper(content, self.handlePrePrepare) // 竟然能做type inference， 牛逼。
 	case CPrepare:
-		p.handlePrepare(content)
+		dispatchHelper(content, self.handlePrepare)
 	case CCommit:
-		p.handleCommit(content)
+		dispatchHelper(content, self.handleCommit)
 	case CStop:
-		p.WaitToStop()
+		self.setStopAndCleanUp()
 
 	// handle the message from outside
 	default:
-		p.ohm.HandleMessageOutsidePBFT(msgType, content)
+		self.ohm.HandleMessageOutsidePBFT(msgType, content)
 	}
 }
 
-func (p *PbftConsensusNode) handleClientRequest(con net.Conn) {
+func (self *PbftConsensusNode) startSession(con net.Conn) {
 	defer con.Close()
 	clientReader := bufio.NewReader(con)
 	for {
-		clientRequest, err := clientReader.ReadBytes('\n')
-		if p.getStopSignal() {
+		clientRequest, err := clientReader.ReadBytes('\n') // 读到反斜杠n。
+		self.stopLock.Lock()
+		stopVal := self.stop
+		self.stopLock.Unlock()
+		if stopVal {
 			return
 		}
-		switch err {
+		switch err { // 没错误那就带锁地handleMessage
 		case nil:
-			p.tcpPoolLock.Lock()
-			p.handleMessage(clientRequest)
-			p.tcpPoolLock.Unlock()
+			self.tcpPoolLock.Lock()
+			self.dispatchMessage(clientRequest)
+			self.tcpPoolLock.Unlock()
 		case io.EOF:
 			log.Println("client closed the connection by terminating the process")
 			return
@@ -168,43 +190,94 @@ func (p *PbftConsensusNode) handleClientRequest(con net.Conn) {
 	}
 }
 
-func (p *PbftConsensusNode) TcpListen() {
-	ln, err := net.Listen("tcp", p.RunningNode.IPaddr)
-	p.tcpln = ln
+func (self *PbftConsensusNode) Run() {
+	if self.NodeID == 0 {
+		println("well my nodeid is 0 so i will do propose")
+		go self.doPropose()
+	}
+	self.doAccept()
+}
+
+// 起一个TCP Server端。
+func (self *PbftConsensusNode) doAccept() {
+	ln, err := net.Listen("tcp", self.RunningNode.IPaddr)
+	self.tcpln = ln
 	if err != nil {
 		log.Panic(err)
 	}
 	for {
-		conn, err := p.tcpln.Accept()
+		conn, err := self.tcpln.Accept()
 		if err != nil {
 			return
 		}
-		go p.handleClientRequest(conn)
+
+		self.pl.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
+		go self.startSession(conn)
 	}
 }
 
 // when received stop
-func (p *PbftConsensusNode) WaitToStop() {
-	p.pl.Println("handling stop message")
-	p.stopLock.Lock()
-	p.stop = true
-	p.stopLock.Unlock()
-	if p.NodeID == p.view {
-		p.pStop <- 1
+func (self *PbftConsensusNode) setStopAndCleanUp() {
+	self.pl.Println("handling stop message")
+	self.stopLock.Lock()
+	self.stop = true
+	self.stopLock.Unlock()
+	if self.NodeID == self.view {
+		self.pStop <- 1
 	}
 	network.Tcp.Close()
-	p.tcpln.Close()
-	p.closePbft()
-	p.pl.Println("handled stop message")
+	self.tcpln.Close()
+	self.CurChain.CloseBlockChain()
+	self.pl.Println("handled stop message")
 }
 
-func (p *PbftConsensusNode) getStopSignal() bool {
-	p.stopLock.Lock()
-	defer p.stopLock.Unlock()
-	return p.stop
+// this func is only invoked by main node
+func (self *PbftConsensusNode) doPropose() {
+	if self.view != self.NodeID { // 保证只能主节点调用。否则返回。
+		return
+	}
+	for { // 这个傻逼节点。for循环一直在do Propose。
+		select { // 判断是否停止的那个信号量。
+		case <-self.pStop:
+			self.pl.Printf("S%dN%d stop...\n", self.ShardID, self.NodeID)
+			return
+		default:
+		}
+		time.Sleep(time.Duration(int64(params.Block_Interval)) * time.Millisecond) // 不停睡觉-propose循环。（发Preprepare）
+
+		self.sequenceLock.Lock() // 他这个设计有毒的。他拿锁当信号量用。Mutex不是有假唤醒什么的么，不能这么用的。。。。。醉了。。。。
+		self.pl.Printf("S%dN%d get sequenceLock locked, now trying to propose...\n", self.ShardID, self.NodeID)
+		// propose
+		// implement interface to generate propose
+		_, r := self.ihm.HandleinPropose()
+
+		digest := getDigest(r)
+		self.requestPool[string(digest)] = r
+		self.pl.Printf("S%dN%d put the request into the pool ...\n", self.ShardID, self.NodeID)
+
+		ppmsg := PrePrepare{
+			RequestMsg: r,
+			Digest:     digest,
+			SeqID:      self.sequenceID,
+		}
+		self.height2Digest[self.sequenceID] = string(digest)
+		// marshal and broadcast
+		ppbyte, err := json.Marshal(ppmsg)
+		if err != nil {
+			log.Panic()
+		}
+		// msg_send := MergeMessage(CPrePrepare, ppbyte)
+		// network.Tcp.Broadcast(self.RunningNode.IPaddr, self.getNeighborNodes(), msg_send)
+		MergeAndBroadcast(CPrePrepare, ppbyte, self.RunningNode.IPaddr, self.getNeighborNodes(), self.pl)
+	}
 }
 
-// close the pbft
-func (p *PbftConsensusNode) closePbft() {
-	p.CurChain.CloseBlockChain()
+func MergeAndBroadcast(t MessageType, data []byte, from string, to []string, logger *log.Logger) {
+	if len(data) < 2000 {
+		logger.Printf("Broadcasting a %v: %v", t, string(data))
+	} else {
+		logger.Printf("Broadcasting a %v: %v", t, string(data[:2000]))
+	}
+	msg_send := MergeMessage(t, data)
+	network.Tcp.Broadcast(from, to, msg_send)
 }

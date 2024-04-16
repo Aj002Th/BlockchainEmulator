@@ -7,10 +7,10 @@ var (
 	TotalDataSize       = 100000 // the total number of txs
 	BatchSize           = 16000  // supervisor read a batch of txs then send them, it should be larger than inject speed
 	BrokerNum           = 10
-	NodesInShard        = 4
+	NodeNum             = 4
 	ShardNum            = 4
 	DataWrite_path      = "./result/"                                                           // measurement data result output path
 	LogWrite_path       = "./log"                                                               // log output path
-	SupervisorAddr      = "127.0.0.1:18800"                                                     //supervisor ip address
+	SupervisorEndpoint  = "127.0.0.1:18800"                                                     //supervisor ip address
 	FileInput           = `C:\Users\Administrator\block-dataset\0to999999_BlockTransaction.csv` //the raw BlockTransaction data path
 )

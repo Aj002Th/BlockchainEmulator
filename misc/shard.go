@@ -3,8 +3,6 @@ package misc
 import (
 	"log"
 	"strconv"
-
-	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
 type Address = string
@@ -16,5 +14,5 @@ func Addr2Shard(addr Address) int {
 	if err != nil {
 		log.Panic(err)
 	}
-	return int(num) % params.ShardNum
+	return int(num) % 1
 }
