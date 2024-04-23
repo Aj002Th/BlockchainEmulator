@@ -4,14 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path"
 	"runtime"
 	"runtime/trace"
-	"time"
 
-	"github.com/Aj002Th/BlockchainEmulator/application/supervisor"
-	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
+	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
 func getAbsPath() string {
@@ -54,22 +51,11 @@ func (self *App) Run() {
 	}
 	defer trace.Stop()
 
+	initConfig() // 记得调用这东西初始化IP表格，否则。。后果很严重。
+
 	if self.args.isClient {
-		if self.args.frontend {
-			webapi.G_Proxy = webapi.NewGoodApiProxy()
-			webapi.RunApiServer()
-			webapi.RunFrontendServer()
-			go exec.Command("start", "http://localhost:3000") // 把浏览器拉起来
-		} else {
-			webapi.G_Proxy = webapi.DumbProxy{}
-		}
-
-		webapi.G_Proxy.Enqueue(webapi.Hello)
-
-		sup := supervisor.NewSupervisor()
-		time.Sleep(10000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
-		sup.Run()
+		BuildSupervisor(self)
 	} else {
-		BuildNewPbftNode(uint64(self.args.nodeID), uint64(self.args.nodeNum))
+		BuildNewPbftNode(uint64(self.args.nodeID), uint64(params.NodeNum))
 	}
 }
