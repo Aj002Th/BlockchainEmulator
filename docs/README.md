@@ -53,7 +53,7 @@ _Below is an example of how you can instruct your audience on installing and set
 
 1. 克隆仓库
 ```sh
-git clone xxxxxxx.git
+git clone https://github.com/Aj002Th/BlockchainEmulator.git
 ```
 
 
@@ -76,3 +76,17 @@ _更具体的例子，请参看 [文档](https://example.com)_
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## 克隆前端源码
+
+为了克隆前端源码你应当在克隆时就递归克隆子模块。
+
+```
+git clone https://github.com/Aj002Th/BlockchainEmulator.git --recurse-submodules
+```
+
+或者，如果已经克隆了前端但没有安装子模块，那么你可以安装子模块。
+
+```
+git submodule init 
+git submodule update
+```
