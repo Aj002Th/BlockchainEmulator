@@ -30,5 +30,10 @@ go.work
 *.db
 *.db.lock
 
-log/
+# output files
 result/
+log/
+*.log
+
+# input data
+*.csv
