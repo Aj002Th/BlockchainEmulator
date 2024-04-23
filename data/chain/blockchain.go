@@ -3,13 +3,14 @@ package chain
 import (
 	"errors"
 	"fmt"
+	"log"
+	"math/big"
+	"time"
+
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/data/mpt"
 	"github.com/Aj002Th/BlockchainEmulator/storage/blockStorage"
 	"github.com/Aj002Th/BlockchainEmulator/storage/stateStorage"
-	"log"
-	"math/big"
-	"time"
 )
 
 // BlockChain 区块链
@@ -57,7 +58,7 @@ func (bc *BlockChain) GetUpdateStatusTrie(txs []*base.Transaction) []byte {
 		senderStateEncoded, _ := st.Get([]byte(tx.Sender))
 		var senderState *base.AccountState
 		if senderStateEncoded == nil {
-			fmt.Println("missing account SENDER, now adding account")
+			// fmt.Println("missing account SENDER, now adding account")
 			ib := new(big.Int)
 			ib.Add(ib, InitBalance)
 			senderState = &base.AccountState{

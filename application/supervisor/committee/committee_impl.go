@@ -14,7 +14,6 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/misc"
-	"github.com/Aj002Th/BlockchainEmulator/network"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
@@ -27,6 +26,8 @@ type RelayCommitteeModule struct {
 	sl           *supervisor_log.SupervisorLog
 	Ss           *signal.StopSignal // to control the stop message sending
 }
+
+var log1 = supervisor_log.Log1
 
 func NewRelayCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *RelayCommitteeModule {
 	return &RelayCommitteeModule{
@@ -56,6 +57,7 @@ func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 
 func (rthm *RelayCommitteeModule) HandleOtherMessage([]byte) {}
 
+// 把这一批交易发送给pbft主节点。
 func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 	// the txs will be sent
 	sendToShard := make(map[uint64][]*base.Transaction)
@@ -63,18 +65,16 @@ func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 	for idx := 0; idx <= len(txlist); idx++ {
 		if idx > 0 && (idx%params.InjectSpeed == 0 || idx == len(txlist)) {
 			// send to shard
-			for sid := uint64(0); sid < uint64(params.ShardNum); sid++ {
-				it := pbft.InjectTxs{
-					Txs:       sendToShard[sid],
-					ToShardID: sid,
-				}
-				itByte, err := json.Marshal(it)
-				if err != nil {
-					log.Panic(err)
-				}
-				send_msg := pbft.MergeMessage(pbft.CInject, itByte)
-				go network.Tcp.Send(send_msg, rthm.IpNodeTable[sid][0])
+			it := pbft.InjectTxs{
+				Txs:       sendToShard[0],
+				ToShardID: 0,
 			}
+			itByte, err := json.Marshal(it)
+			if err != nil {
+				log.Panic(err)
+			}
+			pbft.MergeAndSend(pbft.CInject, itByte, rthm.IpNodeTable[0][0], log1)
+
 			sendToShard = make(map[uint64][]*base.Transaction)
 			time.Sleep(time.Second)
 		}
@@ -87,9 +87,12 @@ func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 	}
 }
 
+// Sup开启的时候同步地调一次。
 // 把tx读出来然后用txSending发出去。
 // read transactions, the Number of the transactions is - batchDataNum
 func (rthm *RelayCommitteeModule) MsgSendingControl() {
+	log1.Println("in MsgSendingControl")
+
 	txfile, err := os.Open(rthm.csvPath)
 	if err != nil {
 		log.Panic(err)
@@ -97,6 +100,8 @@ func (rthm *RelayCommitteeModule) MsgSendingControl() {
 	defer txfile.Close()
 	reader := csv.NewReader(txfile)
 	txlist := make([]*base.Transaction, 0) // save the txs in this epoch (round)
+
+	// 从csv里每batchNum行转换成tx的列表，并且同步地发送出去。
 
 	for {
 		data, err := reader.Read()
@@ -106,17 +111,17 @@ func (rthm *RelayCommitteeModule) MsgSendingControl() {
 		if err != nil {
 			log.Panic(err)
 		}
-		if tx, ok := data2tx(data, uint64(rthm.nowDataNum)); ok {
+		if tx, ok := data2tx(data, uint64(rthm.nowDataNum)); ok { // 从csv row到base.Transaction。并且附加到txlist。并且计数。
 			txlist = append(txlist, tx)
 			rthm.nowDataNum++
 		}
 
 		// re-shard condition, enough edges
-		if len(txlist) == int(rthm.batchDataNum) || rthm.nowDataNum == rthm.dataTotalNum {
+		if len(txlist) == int(rthm.batchDataNum) || rthm.nowDataNum == rthm.dataTotalNum { // 当txlist的长度满足batchDataNum，或者到达顶峰，那就要发送。
 			rthm.txSending(txlist)
 			// reset the variants about tx sending
-			txlist = make([]*base.Transaction, 0)
-			rthm.Ss.StopGap_Reset()
+			txlist = make([]*base.Transaction, 0) // 之后txlist又恢复，从头再来。
+			rthm.Ss.StopGap_Reset()               // StopGap也要Reset。
 		}
 
 		if rthm.nowDataNum == rthm.dataTotalNum {
@@ -125,7 +130,9 @@ func (rthm *RelayCommitteeModule) MsgSendingControl() {
 	}
 }
 
+// Sup会在HandleBlockInfos里调
 // no operation here
 func (rthm *RelayCommitteeModule) HandleBlockInfo(b *pbft.BlockInfoMsg) {
-	rthm.sl.Slog.Printf("received from shard %d in epoch %d.\n", b.SenderShardID, b.Epoch)
+	// log1.Println("module HandleBlockInfo")
+	// NOTHING TO DO
 }

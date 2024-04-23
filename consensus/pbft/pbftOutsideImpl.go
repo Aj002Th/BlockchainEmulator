@@ -8,25 +8,25 @@ import (
 // This module used in the blockChain using transaction relaying mechanism.
 // "Raw" means that the pbft only make block consensus.
 type RawRelayOutsideModule struct {
-	pbftNode *PbftConsensusNode
+	node *PbftConsensusNode
 }
 
 // msgType canbe defined in message
-func (rrom *RawRelayOutsideModule) HandleMessageOutsidePBFT(msgType MessageType, content []byte) bool {
+func (self *RawRelayOutsideModule) HandleMessageOutsidePBFT(msgType MessageType, content []byte) bool {
 	switch msgType {
 	case CInject:
-		rrom.handleInjectTx(content)
+		self.handleInjectTx(content)
 	default:
 	}
 	return true
 }
 
-func (rrom *RawRelayOutsideModule) handleInjectTx(content []byte) {
+func (self *RawRelayOutsideModule) handleInjectTx(content []byte) {
 	it := new(InjectTxs)
 	err := json.Unmarshal(content, it)
 	if err != nil {
 		log.Panic(err)
 	}
-	rrom.pbftNode.CurChain.TransactionPool.AddTransactionsToPool(it.Txs)
-	rrom.pbftNode.pl.Printf("S%dN%d : has handled injected txs msg, txs: %d \n", rrom.pbftNode.ShardID, rrom.pbftNode.NodeID, len(it.Txs))
+	self.node.CurChain.TransactionPool.AddTransactionsToPool(it.Txs)
+	self.node.pl.Printf("S%dN%d : has handled injected txs msg, txs: %d \n", self.node.ShardID, self.node.NodeID, len(it.Txs))
 }

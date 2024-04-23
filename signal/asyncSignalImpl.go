@@ -1,6 +1,15 @@
 package signal
 
-// Channel和FANOUT风格的异步信号机制
+import (
+	"log"
+
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/supervisor_log"
+)
+
+var log1 *log.Logger = supervisor_log.Log1
+
+// Channel和FANOUT风格的异步信号机制。
+// 只能支持在进程内通信。
 
 type ChanCancel = chan int
 
@@ -10,14 +19,14 @@ type Val[DATA any] struct {
 }
 
 func NewVal[DATA any]() Val[DATA] {
-	var cd chan DATA
-	var cc ChanCancel
+	var cd chan DATA = make(chan DATA)
+	var cc ChanCancel = make(ChanCancel)
 	return Val[DATA]{cd: cd, cc: cc}
 }
 
 type AsyncSignalImpl[DATA any] struct {
 	name        string
-	outChannels map[*func(data DATA)]Val[DATA]
+	outChannels map[*func(data DATA)]Val[DATA] // 从Handler到Val（cd和cc）
 }
 
 func NewAsyncSignalImpl[DATA any](name string) AsyncSignalImpl[DATA] {
@@ -33,6 +42,7 @@ func (self AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时�
 	self.outChannels[&cb] = val
 	go func() { // 运行消息队列
 		for {
+			log1.Printf("Im waiting for channel %v\n", val.cd)
 			select {
 			case <-val.cc:
 				return
@@ -53,6 +63,7 @@ func (self AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
 
 func (self AsyncSignalImpl[DATA]) Emit(data DATA) {
 	for _, val := range self.outChannels {
+		log1.Printf("Im sending to channel %v\n", val.cd)
 		val.cd <- data
 	}
 }

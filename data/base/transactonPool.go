@@ -1,9 +1,12 @@
 package base
 
 import (
+	"log"
 	"sync"
 	"time"
 )
+
+var NodeLog *log.Logger
 
 // TransactionPool 交易池
 type TransactionPool struct {
@@ -49,6 +52,7 @@ func (txpool *TransactionPool) PackTransactions(maxTxs uint64) []*Transaction {
 	if uint64(len(txpool.Queue)) < txNum {
 		txNum = uint64(len(txpool.Queue))
 	}
+	NodeLog.Printf("Packing %d txs!!!", txNum)
 	txsPacked := txpool.Queue[:txNum]
 	txpool.Queue = txpool.Queue[txNum:]
 	return txsPacked

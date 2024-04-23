@@ -13,37 +13,37 @@ import (
 
 // set 2d map, only for pbft maps, if the first parameter is true, then set the cntPrepareConfirm map,
 // otherwise, cntCommitConfirm map will be set
-func (p *PbftConsensusNode) set2DMap(isPrePareConfirm bool, key string, val *Node) {
+func (self *PbftConsensusNode) set2DMap(isPrePareConfirm bool, key string, val *Node) {
 	if isPrePareConfirm {
-		if _, ok := p.cntPrepareConfirm[key]; !ok {
-			p.cntPrepareConfirm[key] = make(map[*Node]bool)
+		if _, ok := self.cntPrepareConfirm[key]; !ok {
+			self.cntPrepareConfirm[key] = make(map[*Node]bool)
 		}
-		p.cntPrepareConfirm[key][val] = true
+		self.cntPrepareConfirm[key][val] = true
 	} else {
-		if _, ok := p.cntCommitConfirm[key]; !ok {
-			p.cntCommitConfirm[key] = make(map[*Node]bool)
+		if _, ok := self.cntCommitConfirm[key]; !ok {
+			self.cntCommitConfirm[key] = make(map[*Node]bool)
 		}
-		p.cntCommitConfirm[key][val] = true
+		self.cntCommitConfirm[key][val] = true
 	}
 }
 
 // get neighbor nodes in a shard
-func (p *PbftConsensusNode) getNeighborNodes() []string {
+func (self *PbftConsensusNode) getNeighborNodes() []string {
 	receiverNodes := make([]string, 0)
-	for _, ip := range p.ip_nodeTable[p.ShardID] {
+	for _, ip := range self.ip_nodeTable[self.ShardID] {
 		receiverNodes = append(receiverNodes, ip)
 	}
 	return receiverNodes
 }
 
-func (p *PbftConsensusNode) writeCSVline(str []string) {
-	dirpath := params.DataWrite_path + "pbft_" + strconv.Itoa(int(params.ShardNum))
+func (self *PbftConsensusNode) writeCSVline(str []string) {
+	dirpath := params.DataWrite_path + "pbft_" + strconv.Itoa(int(1))
 	err := os.MkdirAll(dirpath, os.ModePerm)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	targetPath := dirpath + "/Shard" + strconv.Itoa(int(p.ShardID)) + strconv.Itoa(int(params.ShardNum)) + ".csv"
+	targetPath := dirpath + "/Shard" + strconv.Itoa(int(self.ShardID)) + strconv.Itoa(int(1)) + ".csv"
 	f, err := os.Open(targetPath)
 	if err != nil && os.IsNotExist(err) {
 		file, er := os.Create(targetPath)

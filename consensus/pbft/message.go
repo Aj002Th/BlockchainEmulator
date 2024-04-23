@@ -1,9 +1,11 @@
 package pbft
 
 import (
+	"log"
 	"time"
 
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
+	"github.com/Aj002Th/BlockchainEmulator/network"
 )
 
 var prefixMSGtypeLen = 30
@@ -97,11 +99,7 @@ type BlockInfoMsg struct {
 	Relay1TxNum uint64              // the number of cross shard txs
 	Relay1Txs   []*base.Transaction // cross transactions in chain first time
 
-	// for broker
-	Broker1TxNum uint64              // the number of broker 1
-	Broker1Txs   []*base.Transaction // cross transactions at first time by broker
-	Broker2TxNum uint64              // the number of broker 2
-	Broker2Txs   []*base.Transaction // cross transactions at second time by broker
+	TxpoolSize int
 }
 
 type SeqIDinfo struct {
@@ -129,4 +127,16 @@ func SplitMessage(message []byte) (MessageType, []byte) {
 	msgType := string(msgType_pruned)
 	content := message[prefixMSGtypeLen:]
 	return MessageType(msgType), content
+}
+
+func MergeAndSend(t MessageType, content []byte, addr string, logger *log.Logger) {
+	if len(content) > 2000 {
+		logger.Printf("Sending a %v: %v\n", t, string(content[:2000]))
+	} else {
+		logger.Printf("Sending a %v: %v\n", t, string(content))
+	}
+
+	msg_send := MergeMessage(t, content)
+
+	network.Tcp.Send(msg_send, addr)
 }

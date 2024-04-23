@@ -30,4 +30,5 @@ go.work
 *.db
 *.db.lock
 
-
+log/
+result/

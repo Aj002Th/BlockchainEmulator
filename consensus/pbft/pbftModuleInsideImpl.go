@@ -10,21 +10,22 @@ import (
 
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
-	"github.com/Aj002Th/BlockchainEmulator/network"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
 // simple implementation of pbftHandleModule interface ...
 // only for block request and use transaction relay
 type RawRelayPbftExtraHandleMod struct {
-	pbftNode *PbftConsensusNode
+	node *PbftConsensusNode
 	// pointer to pbft data
 }
 
 // propose request with different types
-func (rphm *RawRelayPbftExtraHandleMod) HandleinPropose() (bool, *Request) {
+// 调用GenerateBlock产生一个区块。其实这个做的就是从交易池子里取出至多n个交易，并且弄成一个新区块。
+// 更骚的是，没有新区块也会照样执行不误。。。所以Sup不给主节点东西他也会一直自娱自乐。
+func (self *RawRelayPbftExtraHandleMod) HandleinPropose() (bool, *Request) {
 	// new blocks
-	block := rphm.pbftNode.CurChain.GenerateBlock()
+	block := self.node.CurChain.GenerateBlock()
 	r := &Request{
 		RequestType: BlockRequest,
 		ReqTime:     time.Now(),
@@ -35,19 +36,19 @@ func (rphm *RawRelayPbftExtraHandleMod) HandleinPropose() (bool, *Request) {
 }
 
 // the diy operation in preprepare
-func (rphm *RawRelayPbftExtraHandleMod) HandleinPrePrepare(ppmsg *PrePrepare) bool {
-	if rphm.pbftNode.CurChain.IsValidBlock(base.DecodeBlock(ppmsg.RequestMsg.Msg.Content)) != nil {
-		rphm.pbftNode.pl.Printf("S%dN%d : not a valid block\n", rphm.pbftNode.ShardID, rphm.pbftNode.NodeID)
+func (self *RawRelayPbftExtraHandleMod) HandleinPrePrepare(ppmsg *PrePrepare) bool {
+	if self.node.CurChain.IsValidBlock(base.DecodeBlock(ppmsg.RequestMsg.Msg.Content)) != nil {
+		self.node.pl.Printf("S%dN%d : not a valid block\n", self.node.ShardID, self.node.NodeID)
 		return false
 	}
-	rphm.pbftNode.pl.Printf("S%dN%d : the pre-prepare pbft is correct, putting it into the RequestPool. \n", rphm.pbftNode.ShardID, rphm.pbftNode.NodeID)
-	rphm.pbftNode.requestPool[string(ppmsg.Digest)] = ppmsg.RequestMsg
+	self.node.pl.Printf("S%dN%d : the pre-prepare pbft is correct, putting it into the RequestPool. \n", self.node.ShardID, self.node.NodeID)
+	self.node.requestPool[string(ppmsg.Digest)] = ppmsg.RequestMsg
 	// merge to be a prepare pbft
 	return true
 }
 
 // the operation in prepare, and in pbft + tx relaying, this function does not need to do any.
-func (rphm *RawRelayPbftExtraHandleMod) HandleinPrepare(pmsg *Prepare) bool {
+func (self *RawRelayPbftExtraHandleMod) HandleinPrepare(pmsg *Prepare) bool {
 	fmt.Println("No operations are performed in Extra handle mod")
 	return true
 }
@@ -67,18 +68,18 @@ func PrintBlockChain(bc *chain.BlockChain) string {
 }
 
 // the operation in commit.
-func (rphm *RawRelayPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
-	r := rphm.pbftNode.requestPool[string(cmsg.Digest)]
+func (self *RawRelayPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
+	r := self.node.requestPool[string(cmsg.Digest)]
 	// requestType ...
 	block := base.DecodeBlock(r.Msg.Content)
-	rphm.pbftNode.pl.Printf("S%dN%d : adding the block %d...now height = %d \n", rphm.pbftNode.ShardID, rphm.pbftNode.NodeID, block.Header.Number, rphm.pbftNode.CurChain.CurrentBlock.Header.Number)
-	rphm.pbftNode.CurChain.AddBlock(block)
-	rphm.pbftNode.pl.Printf("S%dN%d : added the block %d... \n", rphm.pbftNode.ShardID, rphm.pbftNode.NodeID, block.Header.Number)
-	PrintBlockChain(rphm.pbftNode.CurChain)
+	self.node.pl.Printf("S%dN%d : adding the block %d...now height = %d \n", self.node.ShardID, self.node.NodeID, block.Header.Number, self.node.CurChain.CurrentBlock.Header.Number)
+	self.node.CurChain.AddBlock(block)
+	self.node.pl.Printf("S%dN%d : added the block %d... \n", self.node.ShardID, self.node.NodeID, block.Header.Number)
+	PrintBlockChain(self.node.CurChain)
 
 	// now try to relay txs to other shards (for main nodes)
-	if rphm.pbftNode.NodeID == rphm.pbftNode.view {
-		rphm.pbftNode.pl.Printf("S%dN%d : main node is trying to send relay txs at height = %d \n", rphm.pbftNode.ShardID, rphm.pbftNode.NodeID, block.Header.Number)
+	if self.node.NodeID == self.node.view {
+		self.node.pl.Printf("S%dN%d : main node is trying to send relay txs at height = %d \n", self.node.ShardID, self.node.NodeID, block.Header.Number)
 		// generate relay pool and collect txs excuted
 		txExcuted := make([]*base.Transaction, 0)
 		relay1Txs := make([]*base.Transaction, 0)
@@ -93,20 +94,20 @@ func (rphm *RawRelayPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 			Epoch:           0,
 			Relay1Txs:       relay1Txs,
 			Relay1TxNum:     uint64(len(relay1Txs)),
-			SenderShardID:   rphm.pbftNode.ShardID,
+			SenderShardID:   self.node.ShardID,
 			ProposeTime:     r.ReqTime,
 			CommitTime:      time.Now(),
+			TxpoolSize:      (len(self.node.CurChain.TransactionPool.Queue)),
 		}
 		bByte, err := json.Marshal(bim)
 		if err != nil {
 			log.Panic()
 		}
-		msg_send := MergeMessage(CBlockInfo, bByte)
-		go network.Tcp.Send(msg_send, rphm.pbftNode.ip_nodeTable[params.DeciderShard][0])
-		rphm.pbftNode.pl.Printf("S%dN%d : sended excuted txs\n", rphm.pbftNode.ShardID, rphm.pbftNode.NodeID)
-		rphm.pbftNode.CurChain.TransactionPool.Locked()
-		rphm.pbftNode.writeCSVline([]string{strconv.Itoa(len(rphm.pbftNode.CurChain.TransactionPool.Queue)), strconv.Itoa(len(txExcuted)), strconv.Itoa(int(bim.Relay1TxNum))})
-		rphm.pbftNode.CurChain.TransactionPool.Unlocked()
+		MergeAndSend(CBlockInfo, bByte, params.SupervisorEndpoint, self.node.pl)
+		self.node.pl.Printf("S%dN%d : sended excuted txs\n", self.node.ShardID, self.node.NodeID)
+		self.node.CurChain.TransactionPool.Locked()
+		self.node.writeCSVline([]string{strconv.Itoa(len(self.node.CurChain.TransactionPool.Queue)), strconv.Itoa(len(txExcuted)), strconv.Itoa(int(bim.Relay1TxNum))})
+		self.node.CurChain.TransactionPool.Unlocked()
 	}
 	return true
 }
