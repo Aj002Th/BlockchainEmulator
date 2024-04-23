@@ -7,8 +7,7 @@ var (
 	TotalDataSize       = 100000 // the total number of txs
 	BatchSize           = 16000  // supervisor read a batch of txs then send them, it should be larger than inject speed
 	BrokerNum           = 10
-	NodeNum             = 4
-	ShardNum            = 4
+	NodeNum             = 3
 	DataWrite_path      = "./result/"                                                           // measurement data result output path
 	LogWrite_path       = "./log"                                                               // log output path
 	SupervisorEndpoint  = "127.0.0.1:18800"                                                     //supervisor ip address
