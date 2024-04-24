@@ -39,7 +39,7 @@ func BuildSupervisor(self *App) {
 		webapi.G_Proxy = webapi.NewGoodApiProxy()
 		go webapi.RunApiServer()
 		go webapi.RunFrontendServer()
-		exec.Command("explorer.exe", "http://localhost:3000").Start() // 把浏览器拉起来
+		exec.Command("explorer.exe", "http://localhost:3000/monitor.html").Start() // 把浏览器拉起来
 	} else {
 		webapi.G_Proxy = webapi.DumbProxy{}
 	}
@@ -47,7 +47,7 @@ func BuildSupervisor(self *App) {
 	webapi.G_Proxy.Enqueue(webapi.Hello)
 
 	sup := supervisor.NewSupervisor()
-	time.Sleep(10000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
+	time.Sleep(10000000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
 	sup.Run()
 }
 

@@ -37,22 +37,22 @@ type GoodApiProxy struct {
 	mtx           sync.RWMutex
 }
 
-func NewGoodApiProxy() GoodApiProxy {
-	return GoodApiProxy{
+func NewGoodApiProxy() *GoodApiProxy {
+	return &GoodApiProxy{
 		queue:         make([]Msg, 0),
 		Append_Signal: signal.NewAsyncSignalImpl[Msg]("appendSignal"),
 	}
 }
 
 // 给PBFT模块用。
-func (ap GoodApiProxy) Enqueue(m Msg) {
+func (ap *GoodApiProxy) Enqueue(m Msg) {
 	ap.mtx.Lock() //写锁成对
 	ap.queue = append(ap.queue, m)
 	ap.mtx.Unlock()
 	ap.Append_Signal.Emit(m)
 }
 
-func (ap GoodApiProxy) dequeue(m *Msg) error {
+func (ap *GoodApiProxy) dequeue(m *Msg) error {
 	if len(ap.queue) > 1 {
 		h := ap.queue[0]
 		ap.queue = ap.queue[1:]
@@ -85,7 +85,7 @@ func writeToCMsg(c *websocket.Conn, m Msg) error {
 }
 
 // 不是private，是包内共享方法。给echo用的
-func (ap GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // without dequeue any elems
+func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // without dequeue any elems
 	// FIXME: 这里要修复, 需要生产者消费者来同步。
 	var chased chan Nothing
 	var append_cb func(m Msg)
@@ -115,7 +115,7 @@ func (ap GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // withou
 	return nil
 }
 
-var G_Proxy ApiProxy = NewGoodApiProxy()
+var G_Proxy ApiProxy
 
 type DumbProxy struct {
 }
@@ -143,8 +143,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 	// 事件循环。现在c变成了buffered的双向队列。
-	G_Proxy.
-		writeToConnNoConsume(c)
+	G_Proxy.writeToConnNoConsume(c)
 }
 
 // 构建一个富有状态的echo函数和相应状态chan。并且返回chan供写入。
