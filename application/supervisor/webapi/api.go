@@ -3,7 +3,6 @@ package webapi
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"log"
 	"net/http"
 	"sync"
@@ -130,14 +129,13 @@ func (dp DumbProxy) writeToConnNoConsume(c *websocket.Conn) error {
 	return nil
 }
 
-var addr = flag.String("addr", "0.0.0.0:7697", "http service address")
-
 var upgrader = websocket.Upgrader{} // use default options
 
 // 为了让echo处理器附加上一个chan状态，我们用闭包实现穷人的对象。
 func echo(w http.ResponseWriter, r *http.Request) {
 	// 这个websocket很奇葩，是依赖标准库的http服务器，并且用http提升成websocket协议。
 	// 原因是websocket其实是HTTP/2.0兼容的。
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // 首先解决一下跨域问题。
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
@@ -151,10 +149,9 @@ func echo(w http.ResponseWriter, r *http.Request) {
 
 // 构建一个富有状态的echo函数和相应状态chan。并且返回chan供写入。
 func RunApiServer() {
-	flag.Parse()
 	log.SetFlags(0)
-	http.HandleFunc("/", echo)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	http.HandleFunc("/api/status", echo)
+	http.ListenAndServe("0.0.0.0:7697", nil)
 }
 
 type PbftItem struct {
@@ -175,8 +172,8 @@ type Re struct {
 
 // 示例代码。不应该放在这里。
 func rrTestCase() {
-	go RunApiServer()
-
+	RunApiServer()
+	log.Fatal(http.ListenAndServe("0.0.0.0:7697", nil))
 }
 
 var Hello = Msg{Type: "hello"}

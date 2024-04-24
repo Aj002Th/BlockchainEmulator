@@ -34,12 +34,14 @@ func makeChainConfig(nid uint64) *chain.Config {
 }
 
 func BuildSupervisor(self *App) {
-
+	println("Build Sup")
 	if self.args.frontend {
 		webapi.G_Proxy = webapi.NewGoodApiProxy()
-		webapi.RunApiServer()
-		webapi.RunFrontendServer()
-		go exec.Command("start", "http://localhost:3000") // 把浏览器拉起来
+		go webapi.RunApiServer()
+		go webapi.RunFrontendServer()
+		print("before exec start")
+		exec.Command("start", "http://localhost:3000") // 把浏览器拉起来
+		print("after exec start")
 	} else {
 		webapi.G_Proxy = webapi.DumbProxy{}
 	}
