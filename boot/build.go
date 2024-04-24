@@ -39,9 +39,7 @@ func BuildSupervisor(self *App) {
 		webapi.G_Proxy = webapi.NewGoodApiProxy()
 		go webapi.RunApiServer()
 		go webapi.RunFrontendServer()
-		print("before exec start")
-		exec.Command("start", "http://localhost:3000") // 把浏览器拉起来
-		print("after exec start")
+		exec.Command("explorer.exe", "http://localhost:3000").Start() // 把浏览器拉起来
 	} else {
 		webapi.G_Proxy = webapi.DumbProxy{}
 	}
