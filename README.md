@@ -66,12 +66,10 @@ git clone https://github.com/Aj002Th/BlockchainEmulator.git
 <!-- USAGE EXAMPLES -->
 ## 使用用例
 
-此项目包含了三个便捷的Windows脚本供运行。
+用go启动器运行。最简单的例子是批量启动。
 
 ```
-./clean.ps1（清除最近产生的运行数据）
-./build.bat（构建exe）
-./run.bat（执行三个PBFT节点的模拟）
+go run main.go -g -N 3
 ```
 
 _更具体的例子，请参看 [文档](./docs/README.md)_
