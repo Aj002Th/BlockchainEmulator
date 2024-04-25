@@ -56,7 +56,7 @@ if ($userInput -like "N*") {
 }
 
 # Loop to execute the command N times
-for ($i = 1; $i -le $N; $i++) {
+for ($i = 1; $i -lt $N; $i++) {
     # Execute the command (replace "print n" with your desired command)
     Write-Host "Executing command $i"
     start cmd "/k .\blockchainEmulator.exe -n $i"
