@@ -12,6 +12,14 @@
 * 提供运行时交易池数据测量以及其他数据测量
 * 可使用的前端
 
+项目具有可使用的前端：
+
+<img src="./docs/images/running_frontend.gif" width="400" alt="运行的前端">
+
+项目启动时将启动若干节点，每个节点对应一个命令行窗口：
+
+<img src="./docs/images/running_cmd.gif.gif" width="400" alt="运行的命令行窗口">
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
