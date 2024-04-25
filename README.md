@@ -18,7 +18,7 @@
 
 项目启动时将启动若干节点，每个节点对应一个命令行窗口：
 
-<img src="./docs/images/running_cmd.gif.gif" width="400" alt="运行的命令行窗口">
+<img src="./docs/images/running_cmd.gif" width="400" alt="运行的命令行窗口">
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
