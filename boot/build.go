@@ -24,7 +24,8 @@ func initConfig() {
 		params.IPmap_nodeTable[0][j] = "127.0.0.1:" + strconv.Itoa(28800+int(j)) // shard和node决定了ip
 	}
 
-	prefix := os.Getenv("BCEM_LOG_PREFIX")
+	// 根据环境变量为log生成prefix。如果没指定那就按分钟生成了。
+	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
 	if prefix == "" {
 		dt := time.Now()
 		prefix = dt.Format("2006-01-02T15:04:05")
@@ -35,6 +36,7 @@ func initConfig() {
 		panic("unique folder create encountered an error.")
 	}
 	params.LogWrite_path = path.Join(params.LogWrite_path, prefix)
+	params.DataWrite_path = path.Join(params.DataWrite_path, prefix)
 
 }
 
@@ -75,8 +77,13 @@ func BuildNewPbftNode(nid, nnm uint64) {
 	}
 }
 
+// 单机启动时的简便方法。
 func StartNAtOnce(nnm uint64) {
 	// 设置命令行参数的日志前缀
+	dt := time.Now()
+	prefix := dt.Format("2006-01-02T15:04:05") // 这是什么格式？我也不知道。
+	os.Setenv("BCEM_OUTPUT_PREFIX", prefix)
+
 	// 构造启动
 	N := strconv.Itoa(int(nnm))
 	// 依次启动各个
