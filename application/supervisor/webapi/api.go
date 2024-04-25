@@ -23,7 +23,7 @@ type Msg struct { // json消息反序列化。
 
 type Progress struct {
 	Count int `json:"count"`
-	Total int `json:"total`
+	Total int `json:"total"`
 }
 
 type ApiProxy interface {
