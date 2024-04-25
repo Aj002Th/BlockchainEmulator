@@ -1,7 +1,9 @@
 package boot
 
 import (
+	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"time"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
+	"github.com/Aj002Th/BlockchainEmulator/misc"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
@@ -20,6 +23,18 @@ func initConfig() {
 	for j := uint64(0); j < uint64(params.NodeNum); j++ {
 		params.IPmap_nodeTable[0][j] = "127.0.0.1:" + strconv.Itoa(28800+int(j)) // shard和node决定了ip
 	}
+
+	prefix := os.Getenv("BCEM_LOG_PREFIX")
+	if prefix == "" {
+		dt := time.Now()
+		prefix = dt.Format("2006-01-02T15:04:05")
+	}
+	var err error
+	prefix, err = misc.CreateUniqueFolder(prefix)
+	if err != nil {
+		panic("unique folder create encountered an error.")
+	}
+	params.LogWrite_path = path.Join(params.LogWrite_path, prefix)
 
 }
 
@@ -58,4 +73,17 @@ func BuildNewPbftNode(nid, nnm uint64) {
 	} else {
 		worker.Run()
 	}
+}
+
+func StartNAtOnce(nnm uint64) {
+	// 设置命令行参数的日志前缀
+	// 构造启动
+	N := strconv.Itoa(int(nnm))
+	// 依次启动各个
+	for i := 0; i < int(nnm); i++ {
+		n := strconv.Itoa(i)
+		exec.Command("start", "cmd", "/k", "go", "run", "-N", N, "-n", n).Start()
+	}
+	// 启动Supervisor
+	exec.Command("start", "cmd", "/k", "go", "run", "-N", N, "-c").Start()
 }

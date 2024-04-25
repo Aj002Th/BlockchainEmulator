@@ -29,6 +29,10 @@ func NewApp(a Args) App {
 }
 
 func (self *App) Run() {
+	if self.args.batch {
+		StartNAtOnce(uint64(self.args.nodeNum))
+		return
+	}
 
 	var f *os.File
 	var err error
