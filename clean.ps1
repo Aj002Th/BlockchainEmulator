@@ -7,15 +7,15 @@ if ($confirm -eq "Y") {
 
     # 遍历列表
     foreach ($dir in $dir_to_remove) {
-        $dir_path = Join-Path -Path "文件夹路径" -ChildPath $dir
+        $dir_path = Join-Path -Path "." -ChildPath $dir
 
         # 检测路径是否存在
         If (Test-Path -Path $dir_path) {
             # 如果存在，则删除文件夹
             Remove-Item -Path $dir_path -Force -Recurse
-            Write-Host "文件夹 $dir 被删除。"
+            Write-Host "文件夹 $dir_path 被删除。"
         } Else {
-            Write-Host "文件夹 $dir 不存在，不用删除。"
+            Write-Host "文件夹 $dir_path 不存在，不用删除。"
         }
     }
 } else {

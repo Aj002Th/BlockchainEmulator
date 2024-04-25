@@ -1,0 +1,3 @@
+[submodule "bcEmSupMonitor"]
+	path = bcEmSupMonitor
+	url = https://github.com/mstrTurtle/bcEmSupMonitor.git

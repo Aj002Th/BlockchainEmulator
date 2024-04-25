@@ -3,7 +3,6 @@ package webapi
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"log"
 	"net/http"
 	"sync"
@@ -38,22 +37,22 @@ type GoodApiProxy struct {
 	mtx           sync.RWMutex
 }
 
-func NewGoodApiProxy() GoodApiProxy {
-	return GoodApiProxy{
+func NewGoodApiProxy() *GoodApiProxy {
+	return &GoodApiProxy{
 		queue:         make([]Msg, 0),
 		Append_Signal: signal.NewAsyncSignalImpl[Msg]("appendSignal"),
 	}
 }
 
 // 给PBFT模块用。
-func (ap GoodApiProxy) Enqueue(m Msg) {
+func (ap *GoodApiProxy) Enqueue(m Msg) {
 	ap.mtx.Lock() //写锁成对
 	ap.queue = append(ap.queue, m)
 	ap.mtx.Unlock()
 	ap.Append_Signal.Emit(m)
 }
 
-func (ap GoodApiProxy) dequeue(m *Msg) error {
+func (ap *GoodApiProxy) dequeue(m *Msg) error {
 	if len(ap.queue) > 1 {
 		h := ap.queue[0]
 		ap.queue = ap.queue[1:]
@@ -86,7 +85,7 @@ func writeToCMsg(c *websocket.Conn, m Msg) error {
 }
 
 // 不是private，是包内共享方法。给echo用的
-func (ap GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // without dequeue any elems
+func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // without dequeue any elems
 	// FIXME: 这里要修复, 需要生产者消费者来同步。
 	var chased chan Nothing
 	var append_cb func(m Msg)
@@ -116,7 +115,7 @@ func (ap GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // withou
 	return nil
 }
 
-var G_Proxy ApiProxy = NewGoodApiProxy()
+var G_Proxy ApiProxy
 
 type DumbProxy struct {
 }
@@ -130,14 +129,13 @@ func (dp DumbProxy) writeToConnNoConsume(c *websocket.Conn) error {
 	return nil
 }
 
-var addr = flag.String("addr", "0.0.0.0:7697", "http service address")
-
 var upgrader = websocket.Upgrader{} // use default options
 
 // 为了让echo处理器附加上一个chan状态，我们用闭包实现穷人的对象。
 func echo(w http.ResponseWriter, r *http.Request) {
 	// 这个websocket很奇葩，是依赖标准库的http服务器，并且用http提升成websocket协议。
 	// 原因是websocket其实是HTTP/2.0兼容的。
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // 首先解决一下跨域问题。
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
@@ -145,16 +143,14 @@ func echo(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close()
 	// 事件循环。现在c变成了buffered的双向队列。
-	G_Proxy.
-		writeToConnNoConsume(c)
+	G_Proxy.writeToConnNoConsume(c)
 }
 
 // 构建一个富有状态的echo函数和相应状态chan。并且返回chan供写入。
 func RunApiServer() {
-	flag.Parse()
 	log.SetFlags(0)
-	http.HandleFunc("/", echo)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	http.HandleFunc("/api/status", echo)
+	http.ListenAndServe("0.0.0.0:7697", nil)
 }
 
 type PbftItem struct {
@@ -175,8 +171,8 @@ type Re struct {
 
 // 示例代码。不应该放在这里。
 func rrTestCase() {
-	go RunApiServer()
-
+	RunApiServer()
+	log.Fatal(http.ListenAndServe("0.0.0.0:7697", nil))
 }
 
 var Hello = Msg{Type: "hello"}

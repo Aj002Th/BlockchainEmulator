@@ -55,7 +55,7 @@ _Below is an example of how you can instruct your audience on installing and set
 
 1. 克隆仓库
 ```sh
-git clone xxxxxxx.git
+git clone https://github.com/Aj002Th/BlockchainEmulator.git
 ```
 
 
