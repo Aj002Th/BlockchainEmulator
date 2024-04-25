@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -88,16 +89,26 @@ func BuildNewPbftNode(nid, nnm uint64) {
 func StartNAtOnce(nnm uint64) {
 	// 设置命令行参数的日志前缀
 	dt := time.Now()
-	prefix := dt.Format("2006-01-02T15:04:05") // 这是什么格式？我也不知道。
+	prefix := dt.Format("20060102-150405") // 这是什么格式？我也不知道。
 	os.Setenv("BCEM_OUTPUT_PREFIX", prefix)
+
+	ex, err := os.Executable()
+	if err != nil {
+		panic("get current execute file path error.")
+	}
+	cwd := filepath.Dir(ex)
 
 	// 构造启动
 	N := strconv.Itoa(int(nnm))
 	// 依次启动各个
 	for i := 0; i < int(nnm); i++ {
 		n := strconv.Itoa(i)
-		exec.Command("start", "cmd", "/k", "go", "run", "main.go", "-N", N, "-n", n).Start()
+		cmd := exec.Command("cmd", "/k", "start", "go", "run", "main.go", "-N", N, "-n", n)
+		cmd.Dir = cwd
+		cmd.Start()
 	}
 	// 启动Supervisor
-	exec.Command("start", "cmd", "/k", "go", "run", "main.go", "-N", N, "-c").Start()
+	cmd := exec.Command("cmd", "/k", "start", "go", "run", "main.go", "-N", N, "-c")
+	cmd.Dir = cwd
+	cmd.Start()
 }
