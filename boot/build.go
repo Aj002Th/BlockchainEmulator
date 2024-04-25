@@ -11,7 +11,6 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
-	"github.com/Aj002Th/BlockchainEmulator/misc"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
@@ -24,27 +23,31 @@ func initConfig() {
 		params.IPmap_nodeTable[0][j] = "127.0.0.1:" + strconv.Itoa(28800+int(j)) // shard和node决定了ip
 	}
 
-	// 根据环境变量为确定prefix。如果没指定那就按分钟生成了。
 	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
 	if prefix == "" {
-		dt := time.Now()
-		prefix = dt.Format("BCEM-20060102-150405")
+		panic("Set the BCEM_OUTPUT_PREFIX env var!")
 	}
 	// 暂定两个文件夹。然后试着生成。不行就加后缀。
 	lPath := path.Join(params.LogWrite_path, prefix)
 	dPath := path.Join(params.DataWrite_path, prefix)
-	var err error
-	lPath, err = misc.CreateUniqueFolder(lPath)
-	if err != nil {
-		panic("unique folder create logPath encountered an error.")
-	}
-	dPath, err = misc.CreateUniqueFolder(dPath)
-	if err != nil {
-		panic("unique folder create dataPath encountered an error.")
-	}
+	rPath := path.Join(params.RecordWrite_path, prefix)
+	// var err error
+	// lPath, err = misc.CreateUniqueFolder(lPath)
+	// if err != nil {
+	// 	panic("unique folder create logPath encountered an error.")
+	// }
+	// dPath, err = misc.CreateUniqueFolder(dPath)
+	// if err != nil {
+	// 	panic("unique folder create dataPath encountered an error.")
+	// }
+	// rPath, err = misc.CreateUniqueFolder(rPath)
+	// if err != nil {
+	// 	panic("unique folder create recordPath encountered an error.")
+	// }
 	// 覆写全局变量
 	params.LogWrite_path = lPath
 	params.DataWrite_path = dPath
+	params.RecordWrite_path = rPath
 }
 
 func makeChainConfig(nid uint64) *chain.Config {
@@ -86,19 +89,20 @@ func BuildNewPbftNode(nid, nnm uint64) {
 
 // 单机启动时的简便方法。
 func StartNAtOnce(nnm uint64) {
-	// 设置命令行参数的前缀的环境变量。没有指定就自己生成。
-	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
-	if prefix == "" {
-		dt := time.Now()
-		prefix = dt.Format("BCEM-20060102-150405")
-	}
-	os.Setenv("BCEM_OUTPUT_PREFIX", prefix)
+	panic("Don't you use this -g flag!")
+	// // 设置命令行参数的前缀的环境变量。没有指定就自己生成。
+	// prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
+	// if prefix == "" {
+	// 	dt := time.Now()
+	// 	prefix = dt.Format("BCEM-20060102-150405")
+	// }
+	// os.Setenv("BCEM_OUTPUT_PREFIX", prefix)
 
-	// 获取项目根目录的正式路径。
-	cwd, err := os.Getwd()
-	if err != nil {
-		panic("get cwd error.")
-	}
+	// // 获取项目根目录的正式路径。
+	// cwd, err := os.Getwd()
+	// if err != nil {
+	// 	panic("get cwd error.")
+	// }
 
 	// 构造启动
 	N := strconv.Itoa(int(nnm))
@@ -106,11 +110,11 @@ func StartNAtOnce(nnm uint64) {
 	for i := 0; i < int(nnm); i++ {
 		n := strconv.Itoa(i)
 		cmd := exec.Command("cmd", "/k", "start", "go", "run", "main.go", "-N", N, "-n", n)
-		cmd.Dir = cwd
+		// cmd.Dir = cwd
 		cmd.Start()
 	}
 	// 启动Supervisor
 	cmd := exec.Command("cmd", "/k", "start", "go", "run", "main.go", "-N", N, "-c")
-	cmd.Dir = cwd
+	// cmd.Dir = cwd
 	cmd.Start()
 }
