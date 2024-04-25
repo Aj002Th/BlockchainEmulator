@@ -15,6 +15,8 @@ func CreateUniqueFolder(folderName string) (string, error) {
 			return "", err
 		}
 		return folderName, nil
+	} else if err != nil {
+		panic("createUniqueFolder meet mistake, name pattern maybe wrong.")
 	}
 
 	// Folder already exists, find a unique name
@@ -28,6 +30,8 @@ func CreateUniqueFolder(folderName string) (string, error) {
 				return "", err
 			}
 			return newFolderName, nil
+		} else if err != nil {
+			panic("createUniqueFolder meet mistake, name pattern maybe wrong.")
 		}
 	}
 }

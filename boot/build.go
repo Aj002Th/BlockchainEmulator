@@ -15,7 +15,7 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
-// 等效于往一个全局的params里放一个params。这个params是大家共用的只读结构。最后返回一个莫名其妙的ChainCOnfig
+// 初始化params。原params内容只是Preset，现在覆写它。包括Endpoint列表、输出路径。
 func initConfig() {
 	if _, ok := params.IPmap_nodeTable[0]; !ok {
 		params.IPmap_nodeTable[0] = make(map[uint64]string)
@@ -24,20 +24,27 @@ func initConfig() {
 		params.IPmap_nodeTable[0][j] = "127.0.0.1:" + strconv.Itoa(28800+int(j)) // shard和node决定了ip
 	}
 
-	// 根据环境变量为log生成prefix。如果没指定那就按分钟生成了。
+	// 根据环境变量为确定prefix。如果没指定那就按分钟生成了。
 	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
 	if prefix == "" {
 		dt := time.Now()
-		prefix = dt.Format("2006-01-02T15:04:05")
+		prefix = dt.Format("BCEM-20060102-150405")
 	}
+	// 暂定两个文件夹。然后试着生成。不行就加后缀。
+	lPath := path.Join(params.LogWrite_path, prefix)
+	dPath := path.Join(params.DataWrite_path, prefix)
 	var err error
-	prefix, err = misc.CreateUniqueFolder(prefix)
+	lPath, err = misc.CreateUniqueFolder(lPath)
 	if err != nil {
-		panic("unique folder create encountered an error.")
+		panic("unique folder create logPath encountered an error.")
 	}
-	params.LogWrite_path = path.Join(params.LogWrite_path, prefix)
-	params.DataWrite_path = path.Join(params.DataWrite_path, prefix)
-
+	dPath, err = misc.CreateUniqueFolder(dPath)
+	if err != nil {
+		panic("unique folder create dataPath encountered an error.")
+	}
+	// 覆写全局变量
+	params.LogWrite_path = lPath
+	params.DataWrite_path = dPath
 }
 
 func makeChainConfig(nid uint64) *chain.Config {
