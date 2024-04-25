@@ -10,7 +10,7 @@ func CreateUniqueFolder(folderName string) (string, error) {
 	_, err := os.Stat(folderName) // 先判断一下目录存不存在
 	if os.IsNotExist(err) {
 		// Folder doesn't exist, create it
-		err := os.Mkdir(folderName, 0755) // 不存在的话那很好。直接创建。否则继续。
+		err := os.MkdirAll(folderName, 0755) // 不存在的话那很好。直接创建。否则继续。
 		if err != nil {
 			return "", err
 		}
@@ -25,7 +25,7 @@ func CreateUniqueFolder(folderName string) (string, error) {
 		_, err := os.Stat(newFolderName)
 		if os.IsNotExist(err) {
 			// Unique folder name found, create it
-			err := os.Mkdir(newFolderName, 0755)
+			err := os.MkdirAll(newFolderName, 0755)
 			if err != nil {
 				return "", err
 			}

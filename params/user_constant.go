@@ -10,6 +10,7 @@ var (
 	NodeNum             = 3
 	DataWrite_path      = "./result/"                                                           // measurement data result output path
 	LogWrite_path       = "./log"                                                               // log output path
+	RecordWrite_path    = "./record"                                                            // record output path
 	SupervisorEndpoint  = "127.0.0.1:18800"                                                     //supervisor ip address
 	FileInput           = `C:\Users\Administrator\block-dataset\0to999999_BlockTransaction.csv` //the raw BlockTransaction data path
 )
