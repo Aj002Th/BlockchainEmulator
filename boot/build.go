@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -87,16 +86,19 @@ func BuildNewPbftNode(nid, nnm uint64) {
 
 // 单机启动时的简便方法。
 func StartNAtOnce(nnm uint64) {
-	// 设置命令行参数的日志前缀
-	dt := time.Now()
-	prefix := dt.Format("20060102-150405") // 这是什么格式？我也不知道。
+	// 设置命令行参数的前缀的环境变量。没有指定就自己生成。
+	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
+	if prefix == "" {
+		dt := time.Now()
+		prefix = dt.Format("BCEM-20060102-150405")
+	}
 	os.Setenv("BCEM_OUTPUT_PREFIX", prefix)
 
-	ex, err := os.Executable()
+	// 获取项目根目录的正式路径。
+	cwd, err := os.Getwd()
 	if err != nil {
-		panic("get current execute file path error.")
+		panic("get cwd error.")
 	}
-	cwd := filepath.Dir(ex)
 
 	// 构造启动
 	N := strconv.Itoa(int(nnm))
