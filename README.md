@@ -1,9 +1,5 @@
-# BlockchainEmulator
-
 <!-- ABOUT THE PROJECT -->
 ## 关于项目
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
 
 区块链模拟器可以模拟PBFT协议的区块链运行，并且测量数据。
 
@@ -12,18 +8,12 @@
 * 提供运行时交易池数据测量以及其他数据测量
 * 可使用的前端
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 ### 构建工具
 
 用以下工具来bootstrap此项目
 
 * Go 1.22以上版本
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- GETTING STARTED -->
@@ -59,10 +49,6 @@ git clone https://github.com/Aj002Th/BlockchainEmulator.git
 ```
 
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 <!-- USAGE EXAMPLES -->
 ## 使用用例
 
@@ -76,5 +62,18 @@ git clone https://github.com/Aj002Th/BlockchainEmulator.git
 
 _更具体的例子，请参看 [文档](https://example.com)_
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## 克隆前端源码
+
+为了克隆前端源码你应当在克隆时就递归克隆子模块。
+
+```
+git clone https://github.com/Aj002Th/BlockchainEmulator.git --recurse-submodules
+```
+
+或者，如果已经克隆了前端但没有安装子模块，那么你可以安装子模块。
+
+```
+git submodule init 
+git submodule update
+```
