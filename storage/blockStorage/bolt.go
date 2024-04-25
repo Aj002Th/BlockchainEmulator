@@ -3,10 +3,13 @@ package blockStorage
 import (
 	"errors"
 	"fmt"
-	"github.com/Aj002Th/BlockchainEmulator/data/base"
-	"github.com/boltdb/bolt"
 	"log"
 	"os"
+	"path"
+
+	"github.com/Aj002Th/BlockchainEmulator/data/base"
+	"github.com/Aj002Th/BlockchainEmulator/params"
+	"github.com/boltdb/bolt"
 )
 
 var (
@@ -29,9 +32,9 @@ type BoltStorage struct {
 // nodeID指代节点的唯一ID
 func NewBoltStorage(nodeID uint) *BoltStorage {
 	// 保证存放数据库文件的路径存在
-	_, errStat := os.Stat("./record")
+	_, errStat := os.Stat(params.RecordWrite_path)
 	if os.IsNotExist(errStat) {
-		errMkdir := os.Mkdir("./record", os.ModePerm)
+		errMkdir := os.MkdirAll(params.RecordWrite_path, os.ModePerm)
 		if errMkdir != nil {
 			log.Panic(errMkdir)
 		}
@@ -39,7 +42,8 @@ func NewBoltStorage(nodeID uint) *BoltStorage {
 		log.Panic(errStat)
 	}
 
-	dbFilePath := fmt.Sprintf("./record/node_%d.db", nodeID)
+	dbFileName := fmt.Sprintf("node_%d.db", nodeID)
+	dbFilePath := path.Join(params.RecordWrite_path, dbFileName)
 	s := &BoltStorage{
 		dbFilePath:            dbFilePath,
 		blockBucket:           blockBucket,

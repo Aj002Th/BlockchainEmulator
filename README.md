@@ -1,5 +1,9 @@
+# BlockchainEmulator
+
 <!-- ABOUT THE PROJECT -->
 ## 关于项目
+
+[![Product Name Screen Shot][product-screenshot]](https://example.com)
 
 区块链模拟器可以模拟PBFT协议的区块链运行，并且测量数据。
 
@@ -8,12 +12,26 @@
 * 提供运行时交易池数据测量以及其他数据测量
 * 可使用的前端
 
+项目具有可使用的前端：
+
+<img src="./docs/images/running_frontend.gif" width="400" alt="运行的前端">
+
+项目启动时将启动若干节点，每个节点对应一个命令行窗口：
+
+<img src="./docs/images/running_cmd.gif" width="400" alt="运行的命令行窗口">
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
 
 ### 构建工具
 
 用以下工具来bootstrap此项目
 
 * Go 1.22以上版本
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 
 
 <!-- GETTING STARTED -->
@@ -49,18 +67,27 @@ git clone https://github.com/Aj002Th/BlockchainEmulator.git
 ```
 
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
 <!-- USAGE EXAMPLES -->
 ## 使用用例
 
-此项目包含了三个便捷的Windows脚本供运行。
+用go启动器运行。最简单的例子是批量启动。目前仅适用于Windows。
 
 ```
-./clean.ps1（清除最近产生的运行数据）
-./build.bat（构建exe）
-./run.bat（执行三个PBFT节点的模拟）
+./run.ps1 -N 3
 ```
 
-_更具体的例子，请参看 [文档](https://example.com)_
+Linux也可以，需要gnome-terminal或其他终端模拟器支持（自行修改启动文件）。
+注意：脚本未经测试。
+
+```
+./run.sh
+```
+
+_更具体的例子，请参看 [文档](./docs/README.md)_
 
 
 ## 克隆前端源码

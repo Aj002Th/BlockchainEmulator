@@ -1,7 +1,9 @@
 package boot
 
 import (
+	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"time"
 
@@ -12,7 +14,7 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
-// 等效于往一个全局的params里放一个params。这个params是大家共用的只读结构。最后返回一个莫名其妙的ChainCOnfig
+// 初始化params。原params内容只是Preset，现在覆写它。包括Endpoint列表、输出路径。
 func initConfig() {
 	if _, ok := params.IPmap_nodeTable[0]; !ok {
 		params.IPmap_nodeTable[0] = make(map[uint64]string)
@@ -21,6 +23,31 @@ func initConfig() {
 		params.IPmap_nodeTable[0][j] = "127.0.0.1:" + strconv.Itoa(28800+int(j)) // shard和node决定了ip
 	}
 
+	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
+	if prefix == "" {
+		panic("Set the BCEM_OUTPUT_PREFIX env var!")
+	}
+	// 暂定两个文件夹。然后试着生成。不行就加后缀。
+	lPath := path.Join(params.LogWrite_path, prefix)
+	dPath := path.Join(params.DataWrite_path, prefix)
+	rPath := path.Join(params.RecordWrite_path, prefix)
+	// var err error
+	// lPath, err = misc.CreateUniqueFolder(lPath)
+	// if err != nil {
+	// 	panic("unique folder create logPath encountered an error.")
+	// }
+	// dPath, err = misc.CreateUniqueFolder(dPath)
+	// if err != nil {
+	// 	panic("unique folder create dataPath encountered an error.")
+	// }
+	// rPath, err = misc.CreateUniqueFolder(rPath)
+	// if err != nil {
+	// 	panic("unique folder create recordPath encountered an error.")
+	// }
+	// 覆写全局变量
+	params.LogWrite_path = lPath
+	params.DataWrite_path = dPath
+	params.RecordWrite_path = rPath
 }
 
 func makeChainConfig(nid uint64) *chain.Config {
@@ -47,7 +74,7 @@ func BuildSupervisor(self *App) {
 	webapi.G_Proxy.Enqueue(webapi.Hello)
 
 	sup := supervisor.NewSupervisor()
-	time.Sleep(10000000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
+	time.Sleep(10000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
 	sup.Run()
 }
 
@@ -58,4 +85,36 @@ func BuildNewPbftNode(nid, nnm uint64) {
 	} else {
 		worker.Run()
 	}
+}
+
+// 单机启动时的简便方法。
+func StartNAtOnce(nnm uint64) {
+	panic("Don't you use this -g flag!")
+	// // 设置命令行参数的前缀的环境变量。没有指定就自己生成。
+	// prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
+	// if prefix == "" {
+	// 	dt := time.Now()
+	// 	prefix = dt.Format("BCEM-20060102-150405")
+	// }
+	// os.Setenv("BCEM_OUTPUT_PREFIX", prefix)
+
+	// // 获取项目根目录的正式路径。
+	// cwd, err := os.Getwd()
+	// if err != nil {
+	// 	panic("get cwd error.")
+	// }
+
+	// 构造启动
+	N := strconv.Itoa(int(nnm))
+	// 依次启动各个
+	for i := 0; i < int(nnm); i++ {
+		n := strconv.Itoa(i)
+		cmd := exec.Command("cmd", "/k", "start", "go", "run", "main.go", "-N", N, "-n", n)
+		// cmd.Dir = cwd
+		cmd.Start()
+	}
+	// 启动Supervisor
+	cmd := exec.Command("cmd", "/k", "start", "go", "run", "main.go", "-N", N, "-c")
+	// cmd.Dir = cwd
+	cmd.Start()
 }
