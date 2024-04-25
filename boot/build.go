@@ -89,8 +89,8 @@ func StartNAtOnce(nnm uint64) {
 	// 依次启动各个
 	for i := 0; i < int(nnm); i++ {
 		n := strconv.Itoa(i)
-		exec.Command("start", "cmd", "/k", "go", "run", "-N", N, "-n", n).Start()
+		exec.Command("start", "cmd", "/k", "go", "run", "main.go", "-N", N, "-n", n).Start()
 	}
 	// 启动Supervisor
-	exec.Command("start", "cmd", "/k", "go", "run", "-N", N, "-c").Start()
+	exec.Command("start", "cmd", "/k", "go", "run", "main.go", "-N", N, "-c").Start()
 }
