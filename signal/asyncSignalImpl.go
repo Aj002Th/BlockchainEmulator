@@ -42,7 +42,7 @@ func (self AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时�
 	self.outChannels[&cb] = val
 	go func() { // 运行消息队列
 		for {
-			log1.Printf("Im waiting for channel %v\n", val.cd)
+			log1.Printf("I'm %v, now waiting for channel %v\n", self.name, val.cd)
 			select {
 			case <-val.cc:
 				return
@@ -63,7 +63,7 @@ func (self AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
 
 func (self AsyncSignalImpl[DATA]) Emit(data DATA) {
 	for _, val := range self.outChannels {
-		log1.Printf("Im sending to channel %v\n", val.cd)
+		log1.Printf("I'm %v, sending to channel %v\n", self.name, val.cd)
 		val.cd <- data
 	}
 }
