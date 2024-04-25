@@ -69,7 +69,7 @@ git clone https://github.com/Aj002Th/BlockchainEmulator.git
 用go启动器运行。最简单的例子是批量启动。
 
 ```
-go run main.go -g -N 3
+./run.ps1
 ```
 
 _更具体的例子，请参看 [文档](./docs/README.md)_
