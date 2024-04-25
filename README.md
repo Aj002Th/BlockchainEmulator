@@ -74,7 +74,7 @@ git clone https://github.com/Aj002Th/BlockchainEmulator.git
 ./run.bat（执行三个PBFT节点的模拟）
 ```
 
-_更具体的例子，请参看 [文档](https://example.com)_
+_更具体的例子，请参看 [文档](./docs/README.md)_
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
