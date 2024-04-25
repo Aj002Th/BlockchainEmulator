@@ -86,19 +86,20 @@ func writeToCMsg(c *websocket.Conn, m Msg) error {
 
 // 不是private，是包内共享方法。给echo用的
 func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // without dequeue any elems
-	// FIXME: 这里要修复, 需要生产者消费者来同步。
-	var chased chan Nothing
+	var others chan Msg = make(chan Msg)
+
+	ap.mtx.RLock() // 读锁成对。在入队前注册监听器确保不错过事件。
 	var append_cb func(m Msg)
 	append_cb = func(m Msg) {
-		<-chased //为了同步。
-		err := writeToCMsg(c, m)
-		if err != nil {
-			log.Print("append_Cb err")
+		others <- m
+		if m.Type == "bye" {
+			close(others)
+			log.Print("Bye Sent")
 			ap.Append_Signal.Disconnect(append_cb)
 		}
 	}
 	ap.Append_Signal.Connect(append_cb)
-	ap.mtx.RLock() // 读锁成对。
+	// 把之前的消息发一遍。
 	var q_copy []Msg = make([]Msg, 0)
 	q_copy = append(q_copy, ap.queue...)
 	ap.mtx.RUnlock()
@@ -111,7 +112,18 @@ func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // witho
 			return errors.New("writeToConn Chase Failed")
 		}
 	}
-	chased <- ValNothing
+
+	for {
+		m, isOpen := <-others
+		if !isOpen {
+			break
+		}
+		err := writeToCMsg(c, m)
+		if err != nil {
+			log.Print("writeToConn Append Failed")
+			return errors.New("writeToConn Append Failed")
+		}
+	}
 	return nil
 }
 
@@ -132,7 +144,7 @@ func (dp DumbProxy) writeToConnNoConsume(c *websocket.Conn) error {
 var upgrader = websocket.Upgrader{} // use default options
 
 // 为了让echo处理器附加上一个chan状态，我们用闭包实现穷人的对象。
-func echo(w http.ResponseWriter, r *http.Request) {
+func echo(w http.ResponseWriter, r *http.Request) { // golang http server是多线程的。
 	// 这个websocket很奇葩，是依赖标准库的http服务器，并且用http提升成websocket协议。
 	// 原因是websocket其实是HTTP/2.0兼容的。
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // 首先解决一下跨域问题。
