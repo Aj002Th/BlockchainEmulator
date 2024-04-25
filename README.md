@@ -66,10 +66,17 @@ git clone https://github.com/Aj002Th/BlockchainEmulator.git
 <!-- USAGE EXAMPLES -->
 ## 使用用例
 
-用go启动器运行。最简单的例子是批量启动。
+用go启动器运行。最简单的例子是批量启动。目前仅适用于Windows。
 
 ```
-./run.ps1
+./run.ps1 -N 3
+```
+
+Linux也可以，需要gnome-terminal或其他终端模拟器支持（自行修改启动文件）。
+注意：脚本未经测试。
+
+```
+./run.sh
 ```
 
 _更具体的例子，请参看 [文档](./docs/README.md)_
