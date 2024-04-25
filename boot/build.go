@@ -47,7 +47,7 @@ func BuildSupervisor(self *App) {
 	webapi.G_Proxy.Enqueue(webapi.Hello)
 
 	sup := supervisor.NewSupervisor()
-	time.Sleep(10000000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
+	time.Sleep(10000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
 	sup.Run()
 }
 

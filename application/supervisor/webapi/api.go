@@ -99,8 +99,8 @@ func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // witho
 	}
 	ap.Append_Signal.Connect(append_cb)
 	ap.mtx.RLock() // 读锁成对。
-	var q_copy []Msg
-	copy(q_copy, ap.queue)
+	var q_copy []Msg = make([]Msg, 0)
+	q_copy = append(q_copy, ap.queue...)
 	ap.mtx.RUnlock()
 
 	for _, m := range q_copy {
@@ -141,7 +141,7 @@ func echo(w http.ResponseWriter, r *http.Request) {
 		log.Print("upgrade:", err)
 		return
 	}
-	defer c.Close()
+	// defer c.Close()
 	// 事件循环。现在c变成了buffered的双向队列。
 	G_Proxy.writeToConnNoConsume(c)
 }
