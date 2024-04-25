@@ -63,8 +63,6 @@ func (ap *GoodApiProxy) dequeue(m *Msg) error {
 	}
 }
 
-// TODO：尝试用CSP来实现。。算了，太抽象了，用signal吧。
-
 type Nothing struct{} // 表示不携带东西的空元组事件data
 
 var ValNothing = Nothing{} // 一个方便的单例。
@@ -90,7 +88,7 @@ func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // witho
 
 	ap.mtx.RLock() // 读锁成对。在入队前注册监听器确保不错过事件。
 	var append_cb func(m Msg)
-	append_cb = func(m Msg) {
+	append_cb = func(m Msg) { // 那个asyncImpl能保证顺序
 		others <- m
 		if m.Type == "bye" {
 			close(others)
@@ -99,7 +97,7 @@ func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // witho
 		}
 	}
 	ap.Append_Signal.Connect(append_cb)
-	// 把之前的消息发一遍。
+	// 把之前的历史消息发一遍。
 	var q_copy []Msg = make([]Msg, 0)
 	q_copy = append(q_copy, ap.queue...)
 	ap.mtx.RUnlock()
@@ -112,7 +110,7 @@ func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // witho
 			return errors.New("writeToConn Chase Failed")
 		}
 	}
-
+	// 现在发送新到达的
 	for {
 		m, isOpen := <-others
 		if !isOpen {
