@@ -44,3 +44,7 @@ func (ttnc *TestTxNumCount_Relay) OutputRecord() (perEpochCTXs []float64, totTxN
 	}
 	return perEpochCTXs, totTxNum
 }
+
+func (ttnc *TestTxNumCount_Relay) GetDesc() string {
+	return "Tx交易数计数，单位为 次."
+}

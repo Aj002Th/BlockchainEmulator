@@ -23,4 +23,5 @@ type MeasureModule interface {
 	HandleExtraMessage([]byte)
 	OutputMetricName() string
 	OutputRecord() ([]float64, float64)
+	GetDesc() string
 }

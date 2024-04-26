@@ -171,6 +171,7 @@ type PbftItem struct {
 
 type MeasureItem struct {
 	Name string    `json:"name"`
+	Desc string    `json:"desc"`
 	Vals []float64 `json:"vals"`
 }
 
