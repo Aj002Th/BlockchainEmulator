@@ -89,5 +89,18 @@ Linux也可以，需要gnome-terminal或其他终端模拟器支持（自行修�
 
 _更具体的例子，请参看 [文档](./docs/README.md)_
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## 克隆前端源码
+
+为了克隆前端源码你应当在克隆时就递归克隆子模块。
+
+```
+git clone https://github.com/Aj002Th/BlockchainEmulator.git --recurse-submodules
+```
+
+或者，如果已经克隆了前端但没有安装子模块，那么你可以安装子模块。
+
+```
+git submodule init 
+git submodule update
+```
