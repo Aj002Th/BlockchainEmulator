@@ -200,8 +200,12 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 		f, err := os.Open(targetPath)
 		resultPerEpoch, totResult := measureMod.OutputRecord()
 
+		allResult := make([]float64, 0)
+		allResult = append(allResult, totResult)
+		allResult = append(allResult, resultPerEpoch...)
+
 		// 附加到包里。
-		measureItems = append(measureItems, webapi.MeasureItem{Name: measureMod.OutputMetricName(), Desc: measureMod.GetDesc(), Vals: resultPerEpoch})
+		measureItems = append(measureItems, webapi.MeasureItem{Name: measureMod.OutputMetricName(), Desc: measureMod.GetDesc(), Vals: allResult})
 
 		// 对于文件则控制精度
 		resultStr := make([]string, 0)
