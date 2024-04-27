@@ -135,10 +135,7 @@ func (d *Supervisor) dispatchMessage(msg []byte) {
 		d.handleBlockInfoMsg(m)
 		// add codes for more functionality
 	default:
-		d.cmt.HandleOtherMessage(msg)
-		for _, mm := range d.testMeasureMods {
-			mm.HandleExtraMessage(msg)
-		}
+		panic("Message Unsupport")
 	}
 }
 

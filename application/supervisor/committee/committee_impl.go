@@ -55,8 +55,6 @@ func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 	return &base.Transaction{}, false
 }
 
-func (rthm *RelayCommitteeModule) HandleOtherMessage([]byte) {}
-
 // 把这一批交易发送给pbft主节点。
 func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 	// the txs will be sent
