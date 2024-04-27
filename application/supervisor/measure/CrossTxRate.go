@@ -54,8 +54,6 @@ func (tctr *TestCrossTxRate_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	}
 }
 
-func (tctr *TestCrossTxRate_Relay) HandleExtraMessage([]byte) {}
-
 func (tctr *TestCrossTxRate_Relay) OutputRecord() (perEpochCTXratio []float64, totCTXratio float64) {
 	perEpochCTXratio = make([]float64, 0)
 	allEpoch_totTxNum := 0.0
@@ -69,4 +67,8 @@ func (tctr *TestCrossTxRate_Relay) OutputRecord() (perEpochCTXratio []float64, t
 	perEpochCTXratio = append(perEpochCTXratio, allEpoch_ctxNum)
 
 	return perEpochCTXratio, allEpoch_ctxNum / allEpoch_totTxNum
+}
+
+func (tctr *TestCrossTxRate_Relay) GetDesc() string {
+	return "Relay跨Tx的概率，分别代表 perEpochCTXratio, allEpoch_totTxNum, allEpoch_ctxNum."
 }

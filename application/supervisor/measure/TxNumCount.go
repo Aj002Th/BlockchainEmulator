@@ -33,8 +33,6 @@ func (ttnc *TestTxNumCount_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	ttnc.txNum[epochid] += float64(len(b.ExcutedTxs))
 }
 
-func (ttnc *TestTxNumCount_Relay) HandleExtraMessage([]byte) {}
-
 func (ttnc *TestTxNumCount_Relay) OutputRecord() (perEpochCTXs []float64, totTxNum float64) {
 	perEpochCTXs = make([]float64, 0)
 	totTxNum = 0.0
@@ -43,4 +41,8 @@ func (ttnc *TestTxNumCount_Relay) OutputRecord() (perEpochCTXs []float64, totTxN
 		totTxNum += tn
 	}
 	return perEpochCTXs, totTxNum
+}
+
+func (ttnc *TestTxNumCount_Relay) GetDesc() string {
+	return "Tx交易数计数，单位为 次."
 }
