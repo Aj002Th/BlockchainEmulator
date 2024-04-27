@@ -66,8 +66,6 @@ func (tat *TestModule_avgTPS_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	}
 }
 
-func (tat *TestModule_avgTPS_Relay) HandleExtraMessage([]byte) {}
-
 // output the average TPS
 func (tat *TestModule_avgTPS_Relay) OutputRecord() (perEpochTPS []float64, totalTPS float64) {
 	perEpochTPS = make([]float64, tat.epochID+1)

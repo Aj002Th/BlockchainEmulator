@@ -54,8 +54,6 @@ func (tctr *TestCrossTxRate_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	}
 }
 
-func (tctr *TestCrossTxRate_Relay) HandleExtraMessage([]byte) {}
-
 func (tctr *TestCrossTxRate_Relay) OutputRecord() (perEpochCTXratio []float64, totCTXratio float64) {
 	perEpochCTXratio = make([]float64, 0)
 	allEpoch_totTxNum := 0.0

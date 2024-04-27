@@ -46,8 +46,6 @@ func (tml *TestModule_TCL_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	}
 }
 
-func (tml *TestModule_TCL_Relay) HandleExtraMessage([]byte) {}
-
 func (tml *TestModule_TCL_Relay) OutputRecord() (perEpochLatency []float64, totLatency float64) {
 	perEpochLatency = make([]float64, 0)
 	latencySum := 0.0
