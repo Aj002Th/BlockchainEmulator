@@ -20,7 +20,6 @@ func GetByName(name string) MeasureModule {
 
 type MeasureModule interface {
 	UpdateMeasureRecord(*pbft.BlockInfoMsg)
-	HandleExtraMessage([]byte)
 	OutputMetricName() string
 	OutputRecord() ([]float64, float64)
 	GetDesc() string
