@@ -1,6 +1,8 @@
 package measure
 
-import "github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+import (
+	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+)
 
 func GetByName(name string) MeasureModule {
 	switch name {
@@ -12,6 +14,8 @@ func GetByName(name string) MeasureModule {
 		return (NewTestCrossTxRate_Relay())
 	case "TxNumberCount_Relay":
 		return (NewTestTxNumCount_Relay())
+	case "BlockNumCount":
+		return (NewBlockNumCount())
 	default:
 		panic("Wrong Measure Name")
 		return nil
