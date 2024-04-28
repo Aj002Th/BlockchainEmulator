@@ -1,9 +1,10 @@
-package metricservice
+package service
 
 import (
 	"os"
 	"time"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/comm"
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -31,11 +32,7 @@ func (me *Cpu) Start() {
 	}()
 }
 
-func (me *Cpu) GetCpuStatic() float64 {
-	return me.avg
-}
-
-func (me *Cpu) Gather(m *MyInfo) {
+func (me *Cpu) Gather(m *comm.MM) {
 
 }
 

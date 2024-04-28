@@ -1,9 +1,10 @@
-package metricservice
+package service
 
 import (
 	"os"
 	"time"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/comm"
 	"github.com/chebyrash/promise"
 	"github.com/shirou/gopsutil/process"
 )
@@ -32,13 +33,13 @@ func (me *Mem) Start() {
 	}()
 }
 
-func (me *Mem) Gather1(m *MyInfo) *promise.Promise[float64] {
+func (me *Mem) Gather1(m *comm.MM) *promise.Promise[float64] {
 	return promise.New(func(resolve func(float64), reject func(error)) {
 		resolve(me.val)
 	})
 }
 
-func (me *Mem) Gather(m *MyInfo) {
+func (me *Mem) Gather(m *comm.MM) {
 
 }
 
