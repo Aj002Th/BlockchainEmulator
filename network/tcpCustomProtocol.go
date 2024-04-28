@@ -14,16 +14,20 @@ import (
 type TcpCustomProtocolNetwork struct {
 	connMapLock    sync.Mutex
 	connectionPool map[string]net.Conn
+	uploadData     int // 统计上传和下载的数据
+	downloadData   int
 }
 
 func NewTcpCustomProtocolNetwork() *TcpCustomProtocolNetwork {
 	return &TcpCustomProtocolNetwork{
 		connectionPool: make(map[string]net.Conn),
+		uploadData:     0,
+		downloadData:   0,
 	}
 }
 
 // Send 发送消息
-func (t *TcpCustomProtocolNetwork) Send(context []byte, addr string) {
+func (t *TcpCustomProtocolNetwork) Send(content []byte, addr string) {
 	t.connMapLock.Lock()
 	defer t.connMapLock.Unlock()
 
@@ -58,7 +62,8 @@ func (t *TcpCustomProtocolNetwork) Send(context []byte, addr string) {
 		go t.readFromConn(addr) // Start reading from new connection
 	}
 
-	_, err = conn.Write(append(context, '\n'))
+	_, err = conn.Write(append(content, '\n'))
+	t.UpdateMetric(len(content)+1, 0) // 带上反斜杠n的长度计算。
 	if err != nil {
 		log.Println("Write error", err)
 		return
@@ -104,6 +109,7 @@ func (t *TcpCustomProtocolNetwork) readFromConn(addr string) {
 
 		// 将消息写入 buffer
 		messageBuffer.Write(buffer[:n])
+		t.UpdateMetric(0, n)
 
 		// 处理完整的消息
 		for {
@@ -121,6 +127,22 @@ func (t *TcpCustomProtocolNetwork) readFromConn(addr string) {
 			}
 		}
 	}
+}
+
+type TT = TcpCustomProtocolNetwork
+
+func (t *TT) UpdateMetric(up int, down int) { // 单位是字节数
+	t.uploadData += up
+	t.downloadData += down
+}
+
+func (t *TT) ResetMetric() {
+	t.uploadData = 0
+	t.downloadData = 0
+}
+
+func (t *TT) GetMetric() (int, int) {
+	return t.uploadData, t.downloadData
 }
 
 // 从 buffer 中读取一行

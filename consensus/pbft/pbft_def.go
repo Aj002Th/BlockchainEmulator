@@ -169,6 +169,7 @@ func (self *PbftConsensusNode) startSession(con net.Conn) {
 	clientReader := bufio.NewReader(con)
 	for {
 		clientRequest, err := clientReader.ReadBytes('\n') // 读到反斜杠n。
+		network.Tcp.UpdateMetric(0, len(clientRequest))
 		self.stopLock.Lock()
 		stopVal := self.stop
 		self.stopLock.Unlock()
