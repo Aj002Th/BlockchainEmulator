@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/Aj002Th/BlockchainEmulator/application/comm"
-	"github.com/chebyrash/promise"
 	"github.com/shirou/gopsutil/process"
 )
 
@@ -33,14 +32,14 @@ func (me *Mem) Start() {
 	}()
 }
 
-func (me *Mem) Gather1(m *comm.MM) *promise.Promise[float64] {
-	return promise.New(func(resolve func(float64), reject func(error)) {
-		resolve(me.val)
-	})
-}
+// func (me *Mem) Gather1(m *comm.MM) *promise.Promise[float64] {
+// 	return promise.New(func(resolve func(float64), reject func(error)) {
+// 		resolve(me.val)
+// 	})
+// }
 
 func (me *Mem) Gather(m *comm.MM) {
-
+	m.MemUsage = int(me.val)
 }
 
 // gopsutil是 Python 工具库psutil 的 Golang 移植版，可以帮助我们方便地获取各种系统和硬件信息。

@@ -33,7 +33,7 @@ func (me *Cpu) Start() {
 }
 
 func (me *Cpu) Gather(m *comm.MM) {
-
+	m.CpuUsage = int(me.avg)
 }
 
 // gopsutil是 Python 工具库psutil 的 Golang 移植版，可以帮助我们方便地获取各种系统和硬件信息。
