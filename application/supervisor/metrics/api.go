@@ -20,7 +20,7 @@ func StartHandle() {
 	comm.Listen()
 	m := comm.Recv()
 	for _, v := range metrics {
-		v.Update(m)
+		v.OnBlockInfoMsg(m)
 	}
 }
 

@@ -43,11 +43,11 @@ func lambda[T any](expr T) func() T {
 }
 
 type Metrics struct {
-	Update    func(m *MM)
-	GetResult func() Desc
-	GetName   func() string
+	OnBlockInfoMsg func(m *MM)
+	GetResult      func() Desc
+	GetName        func() string
 }
 
 func NewMetrics(name string, updater func(m *MM), getResult func() Desc) Metrics {
-	return Metrics{Update: updater, GetResult: getResult, GetName: lambda(name)}
+	return Metrics{OnBlockInfoMsg: updater, GetResult: getResult, GetName: lambda(name)}
 }
