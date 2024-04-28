@@ -3,26 +3,26 @@ package measure
 import "github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 
 // to test average Transaction_Confirm_Latency (TCL)  in this system
-type TestModule_TCL_Relay struct {
+type PCL struct {
 	epochID           int       // 其实这应该叫epochCnt，随着bim到来，这个值是计数递增的。
 	totTxLatencyEpoch []float64 // record the Transaction_Confirm_Latency in each epoch
 	txNum             []float64 // record the txNumber in each epoch
 }
 
-func NewTestModule_TCL_Relay() *TestModule_TCL_Relay {
-	return &TestModule_TCL_Relay{
+func NewPCL() *PCL {
+	return &PCL{
 		epochID:           -1,
 		totTxLatencyEpoch: make([]float64, 0),
 		txNum:             make([]float64, 0),
 	}
 }
 
-func (tml *TestModule_TCL_Relay) OutputMetricName() string {
+func (tml *PCL) OutputMetricName() string {
 	return "Transaction_Confirm_Latency"
 }
 
 // modified latency
-func (tml *TestModule_TCL_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
+func (tml *PCL) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	if b.BlockBodyLength == 0 { // empty block
 		return
 	}
@@ -40,13 +40,13 @@ func (tml *TestModule_TCL_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 
 	for _, tx := range txs {
 		if !tx.Time.IsZero() {
-			tml.totTxLatencyEpoch[epochid] += mTime.Sub(tx.Time).Seconds()
+			tml.totTxLatencyEpoch[epochid] += mTime.Sub(b.ProposeTime).Seconds()
 			tml.txNum[epochid]++
 		}
 	}
 }
 
-func (tml *TestModule_TCL_Relay) OutputRecord() (perEpochLatency []float64, totLatency float64) {
+func (tml *PCL) OutputRecord() (perEpochLatency []float64, totLatency float64) {
 	perEpochLatency = make([]float64, 0)
 	latencySum := 0.0
 	totTxNum := 0.0
@@ -59,6 +59,6 @@ func (tml *TestModule_TCL_Relay) OutputRecord() (perEpochLatency []float64, totL
 	return
 }
 
-func (tml *TestModule_TCL_Relay) GetDesc() Desc {
+func (tml *PCL) GetDesc() Desc {
 	return EmptyDesc()
 }
