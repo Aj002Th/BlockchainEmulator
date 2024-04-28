@@ -1,4 +1,4 @@
-package metricService
+package metricservice
 
 import (
 	"encoding/json"

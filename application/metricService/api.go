@@ -1,4 +1,4 @@
-package metricService
+package metricservice
 
 import (
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
