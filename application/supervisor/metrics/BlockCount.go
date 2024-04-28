@@ -1,20 +1,21 @@
 package metrics
 
-type UniversalMetricMsg struct {
-}
+import "github.com/Aj002Th/BlockchainEmulator/application/comm"
 
-type MM = UniversalMetricMsg
+type MM = comm.MM
 
 func BlockCountMetric() Metrics {
 	var cnt = 0
 	updater := func(m *MM) {
 		cnt += 1
 	}
-	getResult := func() string {
-		return "{}"
+	getResult := func() Desc {
+		return NewDescBuilder().GetDesc()
 	}
 	return NewMetrics("BlockCount", updater, getResult)
 }
+
+//----------------------------------[[ CPU度量 ]]-----------------------------------
 
 func CpuMetric() Metrics {
 	var each = make([]float64, 0)
@@ -22,16 +23,18 @@ func CpuMetric() Metrics {
 	updater := func(m *MM) {
 		each = append(each, 1)
 	}
-	getResult := func() string {
+	getResult := func() Desc {
 		desc := NewDescBuilder().AddElem("each 1", "", 0).AddElem("each2", "", total).GetDesc()
-		return DescPrintJson(desc)
+		return (desc)
 	}
 	return NewMetrics("CpuUsage", updater, getResult)
 }
 
-func Tcl() Metrics {
+//----------------------------------[[ TCL度量 ]]-----------------------------------
 
-}
+// func Tcl() Metrics {
+
+// }
 
 // ---------------------------------------------------------
 
@@ -40,11 +43,11 @@ func lambda[T any](expr T) func() T {
 }
 
 type Metrics struct {
-	GetUpdater func(m *MM)
-	GetResult  func() string
-	GetName    func() string
+	Update    func(m *MM)
+	GetResult func() Desc
+	GetName   func() string
 }
 
-func NewMetrics(name string, updater func(m *MM), getResult func() string) Metrics {
-	return Metrics{GetUpdater: updater, GetResult: getResult, GetName: lambda(name)}
+func NewMetrics(name string, updater func(m *MM), getResult func() Desc) Metrics {
+	return Metrics{Update: updater, GetResult: getResult, GetName: lambda(name)}
 }

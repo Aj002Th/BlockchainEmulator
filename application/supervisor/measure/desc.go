@@ -11,6 +11,10 @@ type DescElem struct {
 
 type Desc = []DescElem
 
+func EmptyDesc() []DescElem {
+	return make([]DescElem, 0)
+}
+
 // // 为GetDesc提供便利。反正遵循这个框架。Go没有type alias所以只能这样
 // type Desc struct {
 // 	val []DescElem

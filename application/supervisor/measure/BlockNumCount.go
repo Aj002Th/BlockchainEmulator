@@ -43,6 +43,7 @@ func (ttnc *TestBlockNumCount) OutputRecord() ([]float64, float64) { // 输出�
 	return slices.Clone(ttnc.bNum), misc.Sum(ttnc.bNum)
 }
 
-func (ttnc *TestBlockNumCount) GetDesc() string {
-	return "产生的区块总数计数，单位为 个."
+func (ttnc *TestBlockNumCount) GetDesc() Desc {
+	_ = "产生的区块总数计数，单位为 个."
+	return EmptyDesc()
 }

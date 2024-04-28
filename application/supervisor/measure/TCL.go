@@ -59,6 +59,6 @@ func (tml *TestModule_TCL_Relay) OutputRecord() (perEpochLatency []float64, totL
 	return
 }
 
-func (tml *TestModule_TCL_Relay) GetDesc() string {
-	return "TCL, perEpochLatency."
+func (tml *TestModule_TCL_Relay) GetDesc() Desc {
+	return EmptyDesc()
 }

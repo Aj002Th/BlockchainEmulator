@@ -87,6 +87,7 @@ func (tat *TestModule_avgTPS_Relay) OutputRecord() (perEpochTPS []float64, total
 	return
 }
 
-func (tat *TestModule_avgTPS_Relay) GetDesc() string {
-	return "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒"
+func (tat *TestModule_avgTPS_Relay) GetDesc() Desc {
+	_ = "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒"
+	return EmptyDesc()
 }

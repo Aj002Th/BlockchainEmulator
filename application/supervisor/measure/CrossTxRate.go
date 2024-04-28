@@ -69,6 +69,6 @@ func (tctr *TestCrossTxRate_Relay) OutputRecord() (perEpochCTXratio []float64, t
 	return perEpochCTXratio, allEpoch_ctxNum / allEpoch_totTxNum
 }
 
-func (tctr *TestCrossTxRate_Relay) GetDesc() string {
-	return "Relay跨Tx的概率，分别代表 perEpochCTXratio, allEpoch_totTxNum, allEpoch_ctxNum."
+func (tctr *TestCrossTxRate_Relay) GetDesc() Desc {
+	return EmptyDesc()
 }
