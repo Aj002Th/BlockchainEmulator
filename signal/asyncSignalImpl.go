@@ -26,16 +26,22 @@ func NewVal[DATA any]() Val[DATA] {
 	return Val[DATA]{cd: cd, cc: cc}
 }
 
-type AsyncSignalImpl[DATA any] struct {
+type AsyncSignalImpl[DATA any] struct { // SO说by value在小对象的时候开销更小。然后它是深拷贝，但遇到指针，map，chan之类就会停止往下拷贝。所以这样应该是可以的。
 	name        string
 	outChannels map[*func(data DATA)]Val[DATA] // 从Handler到Val（cd和cc）
 }
 
 func NewAsyncSignalImpl[DATA any](name string) AsyncSignalImpl[DATA] {
-	return AsyncSignalImpl[DATA]{
+	s := AsyncSignalImpl[DATA]{
 		name:        name,
 		outChannels: make(map[*func(data DATA)]Val[DATA]),
 	}
+	RegisterSig(s) // 把它注册到全局的表里。方便稍后用名字查到。
+	return s
+}
+
+func (self AsyncSignalImpl[DATA]) GetName() string {
+	return self.name
 }
 
 // cb在一个goroutine上依次调用，没有数据竞争。
