@@ -1,6 +1,8 @@
 package measure
 
 import (
+	"encoding/json"
+
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 )
 
@@ -26,5 +28,18 @@ type MeasureModule interface {
 	UpdateMeasureRecord(*pbft.BlockInfoMsg)
 	OutputMetricName() string
 	OutputRecord() ([]float64, float64)
-	GetDesc() string
+	GetDesc() Desc
+}
+
+func MarshalDesc(d Desc) []byte {
+	a, b := json.Marshal(d)
+	if b != nil {
+		panic("PrintDesc")
+	}
+	return a
+}
+
+func PrintDescJson(d Desc) string {
+	a := MarshalDesc(d)
+	return string(a)
 }
