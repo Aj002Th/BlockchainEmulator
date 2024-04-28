@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"sync"
+
+	"github.com/Aj002Th/BlockchainEmulator/signal"
 )
 
 // TcpCustomProtocolNetwork 基于 tcp 自定义的应用层协议
@@ -14,15 +16,15 @@ import (
 type TcpCustomProtocolNetwork struct {
 	connMapLock    sync.Mutex
 	connectionPool map[string]net.Conn
-	uploadData     int // 统计上传和下载的数据
-	downloadData   int
+	OnUpload       signal.Signal[int]
+	OnDownload     signal.Signal[int]
 }
 
 func NewTcpCustomProtocolNetwork() *TcpCustomProtocolNetwork {
 	return &TcpCustomProtocolNetwork{
 		connectionPool: make(map[string]net.Conn),
-		uploadData:     0,
-		downloadData:   0,
+		OnUpload:       signal.NewAsyncSignalImpl[int]("TcpOnUpload"),
+		OnDownload:     signal.NewAsyncSignalImpl[int]("TcpOnDownload"),
 	}
 }
 
@@ -132,17 +134,8 @@ func (t *TcpCustomProtocolNetwork) readFromConn(addr string) {
 type TT = TcpCustomProtocolNetwork
 
 func (t *TT) UpdateMetric(up int, down int) { // 单位是字节数
-	t.uploadData += up
-	t.downloadData += down
-}
-
-func (t *TT) ResetMetric() {
-	t.uploadData = 0
-	t.downloadData = 0
-}
-
-func (t *TT) GetMetric() (int, int) {
-	return t.uploadData, t.downloadData
+	t.OnUpload.Emit(up)
+	t.OnDownload.Emit(down)
 }
 
 // 从 buffer 中读取一行
