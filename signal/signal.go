@@ -24,10 +24,18 @@ func RegisterSig[DATA any](sig Signal[DATA]) {
 	GetGSig()[name] = sig
 }
 
-func FindSignalByName[DATA any](name string) Signal[DATA] {
+func GetSignalByName[DATA any](name string) Signal[DATA] {
 	v, ok := globalSigs[name]
 	if !ok {
-		panic("error")
+		globalSigs[name] = NewAsyncSignalImpl[DATA](name)
 	}
 	return v.(Signal[DATA])
+}
+
+func ExistSignalName(name string) bool {
+	_, ok := globalSigs[name]
+	if !ok {
+		return false
+	}
+	return true
 }

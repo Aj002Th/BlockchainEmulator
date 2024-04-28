@@ -18,6 +18,6 @@ func onStop(Nothing) {
 }
 
 func StartTimeCnt() {
-	signal.FindSignalByName[Nothing]("EmulatorOnBegin").Connect(onBegin)
-	signal.FindSignalByName[Nothing]("EmulatorOnStop").Connect(onStop)
+	signal.GetSignalByName[Nothing]("EmulatorOnBegin").Connect(onBegin)
+	signal.GetSignalByName[Nothing]("EmulatorOnStop").Connect(onStop)
 }

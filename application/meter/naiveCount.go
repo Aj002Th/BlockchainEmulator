@@ -12,6 +12,6 @@ func onCommited(txs int) {
 }
 
 func StartCnt() {
-	sig := signal.FindSignalByName[int]("PbftOnCommitTxs")
+	sig := signal.GetSignalByName[int]("PbftOnCommitTxs")
 	sig.Connect(onCommited)
 }

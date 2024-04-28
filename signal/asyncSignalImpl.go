@@ -39,6 +39,9 @@ type AsyncSignalImpl[DATA any] struct { // SO说by value在小对象的时候开
 }
 
 func NewAsyncSignalImpl[DATA any](name string) AsyncSignalImpl[DATA] {
+	if ExistSignalName(name) {
+		return GetSignalByName[DATA](name).(AsyncSignalImpl[DATA]) // 事实是只有这个Async的Signal有用。所以默认全是AsyncSignal。
+	}
 	s := AsyncSignalImpl[DATA]{
 		name:        name,
 		outChannels: make(map[string]Val[DATA]),

@@ -22,7 +22,7 @@ func Start() {
 		panic("")
 	}
 	var stop atomic.Bool
-	sig := signal.FindSignalByName[Nothing]("OnEmulatorStop")
+	sig := signal.GetSignalByName[Nothing]("OnEmulatorStop")
 	sig.Connect(func(data Nothing) { stop.Store(true) })
 
 	go func() {
