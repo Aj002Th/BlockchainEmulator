@@ -9,7 +9,15 @@ type DescElem struct {
 	Val  interface{} `json:"val"`
 }
 
-type Desc = []DescElem
+type DescHead struct {
+	Name string `json:"name"`
+	Desc string `json:"desc"`
+}
+
+type Desc struct {
+	Head DescHead   `json:"head"`
+	Body []DescElem `json:"body"`
+}
 
 // // 为GetDesc提供便利。反正遵循这个框架。Go没有type alias所以只能这样
 // type Desc struct {
@@ -30,13 +38,13 @@ type DescBuilder struct {
 }
 
 // NewDescBuilder 创建一个新的 DescBuilder 实例
-func NewDescBuilder() *DescBuilder {
-	return &DescBuilder{}
+func NewDescBuilder(name string, desc string) *DescBuilder {
+	return &DescBuilder{desc: Desc{Head: DescHead{Name: name, Desc: desc}}}
 }
 
 // AddElem 向描述中添加元素
 func (builder *DescBuilder) AddElem(name string, desc string, val interface{}) *DescBuilder {
-	builder.desc = append(builder.desc, DescElem{Name: name, Desc: desc, Val: val})
+	builder.desc.Body = append(builder.desc.Body, DescElem{Name: name, Desc: desc, Val: val})
 	return builder
 }
 
