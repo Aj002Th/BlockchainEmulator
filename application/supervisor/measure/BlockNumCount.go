@@ -1,8 +1,10 @@
 package measure
 
 import (
+	"fmt"
 	"slices"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/misc"
 )
@@ -43,7 +45,12 @@ func (ttnc *TestBlockNumCount) OutputRecord() ([]float64, float64) { // 输出�
 	return slices.Clone(ttnc.bNum), misc.Sum(ttnc.bNum)
 }
 
-func (ttnc *TestBlockNumCount) GetDesc() Desc {
+func (ttnc *TestBlockNumCount) GetDesc() metrics.Desc {
 	_ = "产生的区块总数计数，单位为 个."
-	return EmptyDesc()
+	b := metrics.NewDescBuilder("BCount", "Block count")
+	for i, v := range ttnc.bNum {
+		b.AddElem(fmt.Sprintf("Epoch %v", i+1), "", v)
+	}
+	b.AddElem("Total", "", misc.Sum(ttnc.bNum))
+	return b.GetDesc()
 }

@@ -1,6 +1,11 @@
 package measure
 
-import "github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+import (
+	"fmt"
+
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
+	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+)
 
 // to test cross-transaction rate
 type TestCrossTxRate_Relay struct {
@@ -69,6 +74,25 @@ func (tctr *TestCrossTxRate_Relay) OutputRecord() (perEpochCTXratio []float64, t
 	return perEpochCTXratio, allEpoch_ctxNum / allEpoch_totTxNum
 }
 
-func (tctr *TestCrossTxRate_Relay) GetDesc() Desc {
-	return EmptyDesc()
+func (tctr *TestCrossTxRate_Relay) GetDesc() metrics.Desc {
+	b := metrics.NewDescBuilder("TPS avg", "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒")
+
+	var perEpochCTXratio []float64
+
+	perEpochCTXratio = make([]float64, 0)
+	allEpoch_totTxNum := 0.0
+	allEpoch_ctxNum := 0.0
+	for eid, totTxN := range tctr.totTxNum {
+		b.AddElem(fmt.Sprintf("Epoch %v", eid), "", tctr.totCrossTxNum[eid]/totTxN)
+		perEpochCTXratio = append(perEpochCTXratio, tctr.totCrossTxNum[eid]/totTxN)
+		allEpoch_totTxNum += totTxN
+		allEpoch_ctxNum += tctr.totCrossTxNum[eid]
+	}
+	perEpochCTXratio = append(perEpochCTXratio, allEpoch_totTxNum)
+	perEpochCTXratio = append(perEpochCTXratio, allEpoch_ctxNum)
+	b.AddElem("All Epoch Total Tx Num", "", allEpoch_totTxNum)
+	b.AddElem("All Epoch Ctx Num", "", allEpoch_ctxNum)
+
+	b.AddElem("Total CTX Ratio", "", allEpoch_ctxNum/allEpoch_totTxNum)
+	return b.GetDesc()
 }

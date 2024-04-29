@@ -1,6 +1,11 @@
 package measure
 
-import "github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+import (
+	"fmt"
+
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
+	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+)
 
 // to test cross-transaction rate
 type TestTxNumCount_Relay struct {
@@ -43,6 +48,18 @@ func (ttnc *TestTxNumCount_Relay) OutputRecord() (perEpochCTXs []float64, totTxN
 	return perEpochCTXs, totTxNum
 }
 
-func (ttnc *TestTxNumCount_Relay) GetDesc() Desc {
-	return EmptyDesc()
+func (ttnc *TestTxNumCount_Relay) GetDesc() metrics.Desc {
+	b := metrics.NewDescBuilder("TxCount", "")
+
+	var perEpochCTXs []float64
+	var totTxNum float64
+	perEpochCTXs = make([]float64, 0)
+	totTxNum = 0.0
+	for i, tn := range ttnc.txNum {
+		b.AddElem(fmt.Sprintf("Epoch %v", i+1), "", tn)
+		perEpochCTXs = append(perEpochCTXs, tn)
+		totTxNum += tn
+	}
+	b.AddElem("Total Tx Num", "", totTxNum)
+	return b.GetDesc()
 }

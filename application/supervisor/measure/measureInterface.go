@@ -3,6 +3,7 @@ package measure
 import (
 	"encoding/json"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 )
 
@@ -28,7 +29,7 @@ type MeasureModule interface {
 	UpdateMeasureRecord(*pbft.BlockInfoMsg)
 	OutputMetricName() string
 	OutputRecord() ([]float64, float64)
-	GetDesc() Desc
+	GetDesc() metrics.Desc
 }
 
 func MarshalDesc(d Desc) []byte {

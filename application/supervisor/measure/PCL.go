@@ -1,6 +1,11 @@
 package measure
 
-import "github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+import (
+	"fmt"
+
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
+	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+)
 
 // to test average Transaction_Confirm_Latency (TCL)  in this system
 type PCL struct {
@@ -59,6 +64,22 @@ func (tml *PCL) OutputRecord() (perEpochLatency []float64, totLatency float64) {
 	return
 }
 
-func (tml *PCL) GetDesc() Desc {
-	return EmptyDesc()
+func (tml *PCL) GetDesc() metrics.Desc {
+	b := metrics.NewDescBuilder("PCL", "Propose->Commit的")
+
+	var perEpochLatency []float64
+	var totLatency float64
+	perEpochLatency = make([]float64, 0)
+	latencySum := 0.0
+	totTxNum := 0.0
+	for eid, totLatency := range tml.totTxLatencyEpoch {
+		b.AddElem(fmt.Sprintf("Epoch %v时的值", eid), "", totLatency/tml.txNum[eid])
+		perEpochLatency = append(perEpochLatency, totLatency/tml.txNum[eid])
+		latencySum += totLatency
+		totTxNum += tml.txNum[eid]
+	}
+	totLatency = latencySum / totTxNum
+
+	b.AddElem("TotalLatency", "", totLatency)
+	return b.GetDesc()
 }
