@@ -57,9 +57,11 @@ func GetResult() []metrics.Desc { // 每一个度量，作为一棵树，都是�
 	tx := metrics.NewDescBuilder("CPU时间", "交易计数，是指对交易的计数。")
 	bc := metrics.NewDescBuilder("内存测量", "交易计数，是指对交易的计数。")
 	dur := metrics.NewDescBuilder("时间", "")
+	net := metrics.NewDescBuilder("网络", "")
 	var sumC uint64 = 0
 	var sumBc uint64 = 0
 	var sumDur uint64 = 0
+	var sumUp, sumDown int = 0, 0
 	for _, w := range *ws {
 		nn := w.NodeId
 		c := w.TxCount
@@ -68,16 +70,23 @@ func GetResult() []metrics.Desc { // 每一个度量，作为一棵树，都是�
 		tx.AddElem(fmt.Sprintf("节点%v CPU事件", nn), "", c)
 		bc.AddElem(fmt.Sprintf("节点%v 内存测量", nn), "", b)
 		dur.AddElem(fmt.Sprintf("节点%v 时间", nn), "", t)
+		net.AddElem(fmt.Sprintf("节点%v 上传", nn), "", w.TotalUpload)
+		net.AddElem(fmt.Sprintf("节点%v 下载", nn), "", w.TotalDownload)
 		sumC += c
 		sumBc += b
 		sumDur += t
+		sumUp += w.TotalUpload
+		sumDown += w.TotalDownload
 	}
 	tx.AddElem("平均计数", "", sumC/uint64(params.NodeNum))
 	bc.AddElem("平均计数", "", sumBc/uint64(params.NodeNum))
 	dur.AddElem("平均运行时间", "", sumDur/uint64(params.NodeNum))
+	net.AddElem("平均上传流量", "", sumUp/params.NodeNum)
+	net.AddElem("平均下载流量", "", sumDown/params.NodeNum)
 	ds = append(ds, tx.GetDesc())
 	ds = append(ds, bc.GetDesc())
 	ds = append(ds, dur.GetDesc())
+	ds = append(ds, net.GetDesc())
 
 	// 那堆传统模块
 	ds = append(ds, m1.GetDesc())
