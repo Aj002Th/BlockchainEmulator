@@ -21,6 +21,6 @@ func StartCommitRelate() {
 	m1 = measure.NewTestModule_TCL_Relay()
 	m2 = measure.NewTestModule_avgTPS_Relay()
 	m3 = measure.NewPCL()
-	sig := signal.GetSignalByName[pbft.BlockInfoMsg]()
+	sig := signal.GetSignalByName[pbft.BlockInfoMsg]("OnBimReached")
 	sig.Connect(CommitFeed)
 }
