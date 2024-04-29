@@ -1,8 +1,6 @@
 package comm
 
 import (
-	"encoding/json"
-
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 )
 
@@ -15,7 +13,7 @@ type UniversalMetricMsg struct {
 type MM = UniversalMetricMsg
 
 type Wrapper struct {
-	MsgType    string          `json:"msgtype"`
-	SenderNode int             `json:"sender"`
-	Content    json.RawMessage `json:"content"`
+	MsgType    string      `json:"msgtype"`
+	SenderNode int         `json:"sender"`
+	Content    interface{} `json:"content"`
 }

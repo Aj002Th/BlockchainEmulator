@@ -28,18 +28,18 @@ func StartNodeSideGather() {
 }
 
 type Booking struct {
-	avgCpuTime    float64
-	diskMetric    uint64
-	txCount       uint64
-	BlockCount    uint64
-	TotalUpload   int
-	TotalDownload int
+	AvgCpuTime    float64 `json:"avgCpuTime"`
+	DiskMetric    uint64  `json:"disk"`
+	TxCount       uint64  `json:"txc"`
+	BlockCount    uint64  `json:"bc"`
+	TotalUpload   int     `json:"tu"`
+	TotalDownload int     `json:"td"`
 }
 
 func OnEmulatorStop(Void) (Void, error) {
 	// Procs相关
 	comm.Dial()
-	b := Booking{avgCpuTime: avgCpuTime, diskMetric: diskMetric, txCount: txCount, BlockCount: BlockCount, TotalUpload: TotalUpload, TotalDownload: TotalDownload}
+	b := Booking{AvgCpuTime: avgCpuTime, DiskMetric: diskMetric, TxCount: txCount, BlockCount: BlockCount, TotalUpload: TotalUpload, TotalDownload: TotalDownload}
 	w := comm.Wrapper{MsgType: "Bookeeping", Content: b}
 	comm.Send(w)
 	return Void{}, nil
