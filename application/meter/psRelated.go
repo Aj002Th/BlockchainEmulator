@@ -13,6 +13,7 @@ var avgCpuTime float64
 var diskMetric uint64
 
 type Nothing = struct{}
+type Void = struct{}
 
 // 这个不用依赖信号，反正自力更生。
 func Start() {

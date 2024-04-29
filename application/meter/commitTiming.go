@@ -3,6 +3,7 @@ package meter
 import (
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/measure"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+	"github.com/Aj002Th/BlockchainEmulator/signal"
 )
 
 // 包括TPS，TCL那些
@@ -20,4 +21,6 @@ func StartCommitRelate() {
 	m1 = measure.NewTestModule_TCL_Relay()
 	m2 = measure.NewTestModule_avgTPS_Relay()
 	m3 = measure.NewPCL()
+	sig := signal.GetSignalByName[pbft.BlockInfoMsg]()
+	sig.Connect(CommitFeed)
 }

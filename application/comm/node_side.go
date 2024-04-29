@@ -22,7 +22,7 @@ func Dial() {
 	}
 }
 
-func Send(m *MM) {
+func Send(m interface{}) {
 	bs, err := json.Marshal(m)
 	if err != nil {
 		panic("json failed")
