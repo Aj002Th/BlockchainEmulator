@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/meter"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/committee"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/measure"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/signal"
@@ -243,6 +244,7 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 	}
 
 	webapi.G_Proxy.Enqueue(webapi.Completed(d.pbftItems, measureItems))
+	webapi.G_Proxy.Enqueue(webapi.Completed1(d.pbftItems, meter.GetResult()))
 
 	network.Tcp.Close()
 	d.tcpLn.Close()

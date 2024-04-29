@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
 	"github.com/Aj002Th/BlockchainEmulator/signal"
 	"github.com/gorilla/websocket"
 )
@@ -180,6 +181,11 @@ type Re struct {
 	MeasureOutputs []MeasureItem `json:"measureOutputs"`
 }
 
+type Re1 struct {
+	PbftShardCsv   []PbftItem     `json:"pbftShardCsv"`
+	MeasureOutputs []metrics.Desc `json:"measureOutputs"`
+}
+
 // 示例代码。不应该放在这里。
 func rrTestCase() {
 	RunApiServer()
@@ -193,5 +199,8 @@ var Computing = func(Total int, Count int) Msg {
 }
 var Completed = func(PbftShardCsv []PbftItem, MeasureOutputs []MeasureItem) Msg {
 	return Msg{Type: "completed", Content: Re{PbftShardCsv: PbftShardCsv, MeasureOutputs: MeasureOutputs}}
+}
+var Completed1 = func(PbftShardCsv []PbftItem, desc []metrics.Desc) Msg {
+	return Msg{Type: "completed", Content: Re1{PbftShardCsv: PbftShardCsv, MeasureOutputs: desc}}
 }
 var Bye = Msg{Type: "bye"}
