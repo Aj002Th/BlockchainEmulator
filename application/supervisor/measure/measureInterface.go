@@ -32,7 +32,7 @@ type MeasureModule interface {
 	GetDesc() metrics.Desc
 }
 
-func MarshalDesc(d Desc) []byte {
+func MarshalDesc(d metrics.Desc) []byte {
 	a, b := json.Marshal(d)
 	if b != nil {
 		panic("PrintDesc")
@@ -40,7 +40,7 @@ func MarshalDesc(d Desc) []byte {
 	return a
 }
 
-func PrintDescJson(d Desc) string {
+func PrintDescJson(d metrics.Desc) string {
 	a := MarshalDesc(d)
 	return string(a)
 }
