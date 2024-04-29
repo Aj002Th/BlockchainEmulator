@@ -34,6 +34,8 @@ type Booking struct {
 	BlockCount    uint64  `json:"bc"`
 	TotalUpload   int     `json:"tu"`
 	TotalDownload int     `json:"td"`
+	TotalTime     uint64  `json:"tm"`
+	NodeId        int     `json:"nodeid"`
 }
 
 func OnEmulatorStop(Void) (Void, error) {

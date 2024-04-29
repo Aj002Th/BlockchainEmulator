@@ -16,7 +16,7 @@ type Nothing = struct{}
 type Void = struct{}
 
 // 这个不用依赖信号，反正自力更生。
-func Start() {
+func StartPs() {
 	// 创建统计进程
 	p, err := process.NewProcess(int32(os.Getpid()))
 	if err != nil {
