@@ -193,6 +193,7 @@ func (self *PbftConsensusNode) startSession(con net.Conn) {
 }
 
 func (self *PbftConsensusNode) Run() {
+	meter.NodeSideStart()
 	if self.NodeID == 0 {
 		println("well my nodeid is 0 so i will do propose")
 		go self.doPropose()

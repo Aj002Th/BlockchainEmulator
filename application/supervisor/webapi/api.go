@@ -77,7 +77,7 @@ func writeToCMsg(c *websocket.Conn, m Msg) error {
 	}
 	err = c.WriteMessage(websocket.TextMessage, bts)
 	if err != nil {
-		log.Println("write msg to websocket error: ", err)
+		log.Printf("write msg %v to websocket meet error: %v. \n", m, err)
 		return errors.New("the Conn.WriteMessage got some err")
 	}
 	return nil
@@ -119,7 +119,7 @@ func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // witho
 		}
 		err := writeToCMsg(c, m)
 		if err != nil {
-			log.Print("writeToConn Append Failed")
+			log.Print("writeToConn Append Failed: ", err)
 			return errors.New("writeToConn Append Failed")
 		}
 	}

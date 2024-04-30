@@ -67,6 +67,8 @@ func NewSupervisor() *Supervisor {
 	}
 	d.OnNodeStart = sig.GetSignalByName[struct{}]("OnNodeStart")
 
+	d.result = make(chan []metrics.Desc)
+
 	return d
 }
 
@@ -101,14 +103,18 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 func (d *Supervisor) handleBooking(m *pbft.Booking) {
 	d.cntBooking++
 	d.bookings = append(d.bookings, *m)
+	d.sl.Slog.Printf("handleBooking, cnt = %v\n", d.cntBooking)
 	if d.cntBooking == params.NodeNum {
 		result := meter.GetResult(&d.bookings)
+		d.sl.Slog.Printf("handleBooking now got result: %v\n", result)
+		d.sl.Slog.Printf("handleBooking now writing to channel\n")
 		d.result <- result
 	}
 }
 
 func (d *Supervisor) Run() {
 	webapi.G_Proxy.Enqueue(webapi.Started)
+	meter.SupSideStart()
 
 	// 起一个听的循环
 	go d.doAccept()

@@ -14,10 +14,7 @@ type Void = struct{}
 type Booking = pbft.Booking
 
 func SupSideStart() {
-	signal.GetSignalByName[Void]("OnSupStart").Connect(func(Void) {
-		// Sup只需启动Commit相关，因为这些计算比较重。
-		StartCommitRelate()
-	})
+	StartCommitRelate()
 }
 
 var SupOnGathered signal.Signal[metrics.Desc]
