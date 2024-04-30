@@ -1,6 +1,10 @@
 package metrics
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"math"
+	"strconv"
+)
 
 // 这是Desc的组成元素。
 type DescElem struct {
@@ -42,9 +46,24 @@ func NewDescBuilder(name string, desc string) *DescBuilder {
 	return &DescBuilder{desc: Desc{Head: DescHead{Name: name, Desc: desc}}}
 }
 
+func checkAndConvertFloat(value interface{}) interface{} {
+	// 判断类型是否为 float, float32, float64
+	switch value.(type) {
+	case float32, float64:
+		// 检查值是否为 NaN
+		if math.IsNaN(value.(float64)) {
+			// 如果是 NaN，将其转换为字符串
+			return strconv.FormatFloat(value.(float64), 'f', -1, 64)
+		}
+	}
+
+	// 如果不是 float 类型或者不是 NaN，则原样返回
+	return value
+}
+
 // AddElem 向描述中添加元素
 func (builder *DescBuilder) AddElem(name string, desc string, val interface{}) *DescBuilder {
-	builder.desc.Body = append(builder.desc.Body, DescElem{Name: name, Desc: desc, Val: val})
+	builder.desc.Body = append(builder.desc.Body, DescElem{Name: name, Desc: desc, Val: checkAndConvertFloat(val)})
 	return builder
 }
 
