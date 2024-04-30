@@ -13,7 +13,6 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/committee"
@@ -43,11 +42,9 @@ type Supervisor struct {
 	pbftItems       []webapi.PbftItem
 	OnNodeStart     sig.Signal[struct{}]
 
-	cntBooking        int
-	bookings          []pbft.Booking
-	resultGeneratedCv sync.Cond
-	resultGenerated   atomic.Bool
-	result            []metrics.Desc
+	cntBooking int
+	bookings   []pbft.Booking
+	result     chan []metrics.Desc
 }
 
 var log1 = supervisor_log.Log1
@@ -105,9 +102,8 @@ func (d *Supervisor) handleBooking(m *pbft.Booking) {
 	d.cntBooking++
 	d.bookings = append(d.bookings, *m)
 	if d.cntBooking == params.NodeNum {
-		d.result = meter.GetResult(&d.bookings)
-		d.resultGenerated.Store(true)
-		d.resultGeneratedCv.Broadcast()
+		result := meter.GetResult(&d.bookings)
+		d.result <- result
 	}
 }
 
@@ -274,17 +270,10 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 
 	d.sl.Slog.Println("Now waiting for Other Node Bookings and result")
 
-	if !d.resultGenerated.Load() {
-		for {
-			d.resultGeneratedCv.Wait()
-			if d.resultGenerated.Load() == true {
-				break
-			}
-		}
-	}
+	result := <-d.result
 	d.sl.Slog.Println("result generated")
 
-	webapi.G_Proxy.Enqueue(webapi.Completed1(d.pbftItems, d.result))
+	webapi.G_Proxy.Enqueue(webapi.Completed1(d.pbftItems, result))
 
 	network.Tcp.Close()
 	d.tcpLn.Close()
