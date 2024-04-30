@@ -224,7 +224,7 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 	// var measureItems []webapi.MeasureItem = make([]webapi.MeasureItem, 0)
 
 	for _, measureMod := range d.testMeasureMods { // 遍历测试模组
-		targetPath := dirpath + measureMod.OutputMetricName() + ".csv"
+		targetPath := path.Join(dirpath, measureMod.OutputMetricName()+".csv")
 		f, err := os.Open(targetPath)
 		resultPerEpoch, totResult := measureMod.OutputRecord()
 
