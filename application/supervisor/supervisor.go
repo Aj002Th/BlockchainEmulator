@@ -218,7 +218,7 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 	if err != nil {
 		log.Panic(err)
 	}
-	var measureItems []webapi.MeasureItem = make([]webapi.MeasureItem, 0)
+	// var measureItems []webapi.MeasureItem = make([]webapi.MeasureItem, 0)
 
 	for _, measureMod := range d.testMeasureMods { // 遍历测试模组
 		targetPath := dirpath + measureMod.OutputMetricName() + ".csv"
@@ -230,7 +230,7 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 		allResult = append(allResult, resultPerEpoch...)
 
 		// 附加到包里。
-		measureItems = append(measureItems, webapi.MeasureItem{Name: measureMod.OutputMetricName(), Desc: measure.PrintDescJson(measureMod.GetDesc()), Vals: allResult})
+		// measureItems = append(measureItems, webapi.MeasureItem{Name: measureMod.OutputMetricName(), Desc: measure.PrintDescJson(measureMod.GetDesc()), Vals: allResult})
 
 		// 对于文件则控制精度
 		resultStr := make([]string, 0)

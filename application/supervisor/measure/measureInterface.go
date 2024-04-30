@@ -33,9 +33,9 @@ type MeasureModule interface {
 }
 
 func MarshalDesc(d metrics.Desc) []byte {
-	a, b := json.Marshal(d)
-	if b != nil {
-		panic("PrintDesc")
+	a, err := json.Marshal(d)
+	if err != nil {
+		panic(err)
 	}
 	return a
 }
