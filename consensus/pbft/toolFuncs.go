@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path"
 	"strconv"
 
 	"github.com/Aj002Th/BlockchainEmulator/params"
@@ -37,7 +38,7 @@ func (self *PbftConsensusNode) getNeighborNodes() []string {
 }
 
 func (self *PbftConsensusNode) writeCSVline(str []string) {
-	dirpath := params.DataWrite_path + "pbft_" + strconv.Itoa(int(1))
+	dirpath := path.Join(params.DataWrite_path, "pbft_"+strconv.Itoa(int(1)))
 	err := os.MkdirAll(dirpath, os.ModePerm)
 	if err != nil {
 		log.Panic(err)

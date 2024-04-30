@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path"
 	"strconv"
 	"sync"
 	"time"
@@ -215,7 +216,7 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 
 	d.sl.Slog.Println("Before input .csv")
 	// write to .csv file
-	dirpath := params.DataWrite_path + "supervisor_measureOutput/"
+	dirpath := path.Join(params.DataWrite_path, "supervisor_measureOutput/")
 	err := os.MkdirAll(dirpath, os.ModePerm)
 	if err != nil {
 		log.Panic(err)
