@@ -54,3 +54,22 @@ func TestMulti(t *testing.T) {
 		t.Fatalf(`哦不， signal handler 没有反应！`)
 	}
 }
+
+func TestDisconnect(t *testing.T) {
+	var sig signal.Signal[int] = signal.NewAsyncSignalImpl[int]("sigTest")
+	cnt := 0
+	var cb func(data int)
+	cb = func(data int) {
+		fmt.Println("there is cb")
+		println("the data is : ", data)
+		cnt++
+		sig.Disconnect(cb)
+	}
+	sig.Connect(cb)
+	sig.Emit(1)
+	sig.Emit(2)
+	time.Sleep(1 * time.Second)
+	if cnt != 1 {
+		t.Fatalf("")
+	}
+}
