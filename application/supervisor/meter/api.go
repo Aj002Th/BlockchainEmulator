@@ -1,32 +1,22 @@
 package meter
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/Aj002Th/BlockchainEmulator/application/comm"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
+	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 	"github.com/Aj002Th/BlockchainEmulator/signal"
 	"github.com/chebyrash/promise"
 )
 
-type Wrapper = comm.Wrapper
+type Void = struct{}
+type Booking = pbft.Booking
 
 func SupSideStart() {
 	signal.GetSignalByName[Void]("OnSupStart").Connect(func(Void) {
 		// Sup只需启动Commit相关，因为这些计算比较重。
 		StartCommitRelate()
-	})
-}
-
-func NodeSideStart() {
-	// Node需要启动区块计数等等模块。
-	signal.GetSignalByName[Void]("OnNodeStart").Connect(func(Void) {
-		StartCnt()
-		StartNet()
-		StartTimeCnt()
-		StartPs()
 	})
 }
 
@@ -48,9 +38,9 @@ func GetNReturnAsync() *promise.Promise[[]Booking] {
 	return p
 }
 
-func GetResult() []metrics.Desc { // 每一个度量，作为一棵树，都是一个Desc。现在需要一系列Desc。
-	pws := GetNReturnAsync()
-	ws, _ := pws.Await(context.Background()) // 暂时没err，不用管err
+func GetResult(ws *[]Booking) []metrics.Desc { // 每一个度量，作为一棵树，都是一个Desc。现在需要一系列Desc。
+	// pws := GetNReturnAsync()
+	// ws, _ := pws.Await(context.Background()) // 暂时没err，不用管err
 	var ds = make([]metrics.Desc, 0)
 
 	// 统计TxCount和BlockNum和运行时间
@@ -58,16 +48,16 @@ func GetResult() []metrics.Desc { // 每一个度量，作为一棵树，都是�
 	bc := metrics.NewDescBuilder("内存测量", "交易计数，是指对交易的计数。")
 	dur := metrics.NewDescBuilder("时间", "")
 	net := metrics.NewDescBuilder("网络", "")
-	var sumC uint64 = 0
+	var sumC float64 = 0
 	var sumBc uint64 = 0
 	var sumDur uint64 = 0
 	var sumUp, sumDown int = 0, 0
 	for _, w := range *ws {
 		nn := w.NodeId
-		c := w.TxCount
-		b := w.BlockCount
+		c := w.AvgCpuTime
+		b := w.DiskMetric
 		t := w.TotalTime
-		tx.AddElem(fmt.Sprintf("节点%v CPU事件", nn), "", c)
+		tx.AddElem(fmt.Sprintf("节点%v CPU时间", nn), "", c)
 		bc.AddElem(fmt.Sprintf("节点%v 内存测量", nn), "", b)
 		dur.AddElem(fmt.Sprintf("节点%v 时间", nn), "", t)
 		net.AddElem(fmt.Sprintf("节点%v 上传", nn), "", w.TotalUpload)
@@ -78,7 +68,7 @@ func GetResult() []metrics.Desc { // 每一个度量，作为一棵树，都是�
 		sumUp += w.TotalUpload
 		sumDown += w.TotalDownload
 	}
-	tx.AddElem("平均计数", "", sumC/uint64(params.NodeNum))
+	tx.AddElem("平均计数", "", sumC/float64(params.NodeNum))
 	bc.AddElem("平均计数", "", sumBc/uint64(params.NodeNum))
 	dur.AddElem("平均运行时间", "", sumDur/uint64(params.NodeNum))
 	net.AddElem("平均上传流量", "", sumUp/params.NodeNum)

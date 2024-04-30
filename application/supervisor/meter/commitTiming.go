@@ -11,13 +11,13 @@ import (
 var m1, m2, m3, m4, m5, m6 measure.MeasureModule
 
 // 在sup端计算的时候用。
-func CommitFeed(bim pbft.BlockInfoMsg) {
-	m1.UpdateMeasureRecord(&bim)
-	m2.UpdateMeasureRecord(&bim)
-	m3.UpdateMeasureRecord(&bim)
-	m4.UpdateMeasureRecord(&bim)
-	m5.UpdateMeasureRecord(&bim)
-	m6.UpdateMeasureRecord(&bim)
+func CommitFeed(bim *pbft.BlockInfoMsg) {
+	m1.UpdateMeasureRecord(bim)
+	m2.UpdateMeasureRecord(bim)
+	m3.UpdateMeasureRecord(bim)
+	m4.UpdateMeasureRecord(bim)
+	m5.UpdateMeasureRecord(bim)
+	m6.UpdateMeasureRecord(bim)
 }
 
 func StartCommitRelate() {
@@ -28,6 +28,6 @@ func StartCommitRelate() {
 	m5 = measure.NewTestCrossTxRate_Relay()
 	m6 = measure.NewTestTxNumCount_Relay()
 
-	sig := signal.GetSignalByName[pbft.BlockInfoMsg]("OnBimReached")
+	sig := signal.GetSignalByName[*pbft.BlockInfoMsg]("OnBimReached")
 	sig.Connect(CommitFeed)
 }

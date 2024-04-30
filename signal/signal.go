@@ -1,5 +1,7 @@
 package signal
 
+import "fmt"
+
 // 信号。实例代表某种信号。可以注册或者卸载lambda函数。
 type Signal[DATA any] interface {
 	GetName() string
@@ -8,8 +10,8 @@ type Signal[DATA any] interface {
 	Emit(data DATA)
 }
 
-// 不要直接操作这个。
-var globalSigs map[string]interface{}
+// 不要直接操作这个。因为单例模式可能没初始化。请用GetGSig访问。
+var globalSigs map[string]interface{} = make(map[string]interface{})
 
 // 线程不安全。访问请加锁。
 func GetGSig() map[string]interface{} {
@@ -27,7 +29,10 @@ func RegisterSig[DATA any](sig Signal[DATA]) {
 func GetSignalByName[DATA any](name string) Signal[DATA] {
 	v, ok := globalSigs[name]
 	if !ok {
-		globalSigs[name] = NewAsyncSignalImpl[DATA](name)
+		newVal := NewAsyncSignalImpl[DATA](name)
+		fmt.Printf("Warning: GetSig Creating a New Sig In GetByName %v Because No Name Found", name)
+		globalSigs[name] = newVal
+		return newVal
 	}
 	return v.(Signal[DATA])
 }

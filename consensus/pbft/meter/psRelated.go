@@ -9,8 +9,8 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
-var avgCpuTime float64
-var diskMetric uint64
+var AvgCpuTime float64
+var DiskMetric uint64
 
 type Nothing = struct{}
 type Void = struct{}
@@ -36,7 +36,7 @@ func StartPs() {
 		if err != nil {
 			panic("Wrong")
 		}
-		avgCpuTime = t
+		AvgCpuTime = t
 	}()
 
 	go func() {
@@ -49,7 +49,7 @@ func StartPs() {
 		if err != nil {
 			panic("Wrong")
 		}
-		diskMetric = t
+		DiskMetric = t
 	}()
 
 }

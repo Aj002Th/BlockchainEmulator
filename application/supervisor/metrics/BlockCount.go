@@ -1,8 +1,6 @@
 package metrics
 
-import "github.com/Aj002Th/BlockchainEmulator/application/comm"
-
-type MM = comm.MM
+// type MM = comm.MM
 
 // func BlockCountMetric() Metrics {
 // 	var cnt = 0

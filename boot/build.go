@@ -79,6 +79,7 @@ func BuildSupervisor(self *App) {
 }
 
 func BuildNewPbftNode(nid, nnm uint64) {
+
 	worker := pbft.NewPbftNode(nid, makeChainConfig(nid), "Relay")
 	if nid == 0 {
 		worker.Run()

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft/meter"
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
 	"github.com/Aj002Th/BlockchainEmulator/misc"
@@ -226,10 +227,23 @@ func (self *PbftConsensusNode) setStopAndCleanUp() {
 	if self.NodeID == self.view {
 		self.pStop <- 1
 	}
+
+	GatherAndSend(int(self.NodeID))
+
 	network.Tcp.Close()
 	self.tcpln.Close()
 	self.CurChain.CloseBlockChain()
 	self.pl.Println("handled stop message")
+}
+
+func GatherAndSend(nodeid int) {
+	// Procs相关
+	b := Booking{AvgCpuTime: meter.AvgCpuTime, DiskMetric: meter.DiskMetric, TotalUpload: meter.TotalUpload, TotalDownload: meter.TotalDownload, TotalTime: uint64(time.Since(meter.Time_Begin)), NodeId: nodeid}
+	m, err := json.Marshal(b)
+	if err != nil {
+		panic(err)
+	}
+	MergeAndSend(CBooking, m, params.SupervisorEndpoint, log.Default())
 }
 
 // this func is only invoked by main node

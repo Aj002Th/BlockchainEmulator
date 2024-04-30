@@ -13,11 +13,13 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/Aj002Th/BlockchainEmulator/application/meter"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/committee"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/measure"
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/meter"
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/signal"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/supervisor_log"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
@@ -39,6 +41,13 @@ type Supervisor struct {
 
 	txCompleteCount int
 	pbftItems       []webapi.PbftItem
+	OnNodeStart     sig.Signal[struct{}]
+
+	cntBooking        int
+	bookings          []pbft.Booking
+	resultGeneratedCv sync.Cond
+	resultGenerated   atomic.Bool
+	result            []metrics.Desc
 }
 
 var log1 = supervisor_log.Log1
@@ -59,6 +68,7 @@ func NewSupervisor() *Supervisor {
 		d.testMeasureMods = append(d.testMeasureMods, m)
 		d.blockPostedSignal.Connect(func(data pbft.BlockInfoMsg) { m.UpdateMeasureRecord(&data) })
 	}
+	d.OnNodeStart = sig.GetSignalByName[struct{}]("OnNodeStart")
 
 	return d
 }
@@ -89,6 +99,16 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 	// measure update
 	d.blockPostedSignal.Emit(*m)
 	// add codes here ...
+}
+
+func (d *Supervisor) handleBooking(m *pbft.Booking) {
+	d.cntBooking++
+	d.bookings = append(d.bookings, *m)
+	if d.cntBooking == params.NodeNum {
+		d.result = meter.GetResult(&d.bookings)
+		d.resultGenerated.Store(true)
+		d.resultGeneratedCv.Broadcast()
+	}
 }
 
 func (d *Supervisor) Run() {
@@ -135,6 +155,13 @@ func (d *Supervisor) dispatchMessage(msg []byte) {
 		}
 		d.handleBlockInfoMsg(m)
 		// add codes for more functionality
+	case pbft.CBooking:
+		m := new(pbft.Booking)
+		err := json.Unmarshal(content, m)
+		if err != nil {
+			log.Panic()
+		}
+		d.handleBooking(m)
 	default:
 		panic("Message Unsupport")
 	}
@@ -243,8 +270,21 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 		d.sl.Slog.Println(measureMod.OutputRecord())
 	}
 
-	webapi.G_Proxy.Enqueue(webapi.Completed(d.pbftItems, measureItems))
-	webapi.G_Proxy.Enqueue(webapi.Completed1(d.pbftItems, meter.GetResult()))
+	// webapi.G_Proxy.Enqueue(webapi.Completed(d.pbftItems, measureItems))
+
+	d.sl.Slog.Println("Now waiting for Other Node Bookings and result")
+
+	if !d.resultGenerated.Load() {
+		for {
+			d.resultGeneratedCv.Wait()
+			if d.resultGenerated.Load() == true {
+				break
+			}
+		}
+	}
+	d.sl.Slog.Println("result generated")
+
+	webapi.G_Proxy.Enqueue(webapi.Completed1(d.pbftItems, d.result))
 
 	network.Tcp.Close()
 	d.tcpLn.Close()
