@@ -200,7 +200,7 @@ func (self *PbftConsensusNode) Run() {
 				if err != nil {
 					panic(err)
 				}
-				MergeAndSend(CBooking, m, params.SupervisorEndpoint, self.pl)
+				MergeAndSend(CKeepAlive, m, params.SupervisorEndpoint, self.pl)
 				time.Sleep(time.Second * 5)
 			}
 		}()
@@ -210,19 +210,24 @@ func (self *PbftConsensusNode) Run() {
 
 // 起一个TCP Server端。
 func (self *PbftConsensusNode) doAccept() {
-	ln, err := net.Listen("tcp", self.RunningNode.IPaddr)
-	self.tcpln = ln
-	if err != nil {
-		log.Panic(err)
-	}
-	for {
-		conn, err := self.tcpln.Accept()
-		if err != nil {
-			return
-		}
+	// ln, err := net.Listen("tcp", self.RunningNode.IPaddr)
+	// self.tcpln = ln
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
+	// for {
+	// 	conn, err := self.tcpln.Accept()
+	// 	if err != nil {
+	// 		return
+	// 	}
 
-		self.pl.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
-		go self.startSession(conn)
+	// 	self.pl.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
+	// 	go self.startSession(conn)
+	// }
+	ch := network.Tcp.Serve(self.RunningNode.IPaddr)
+	for {
+		clientRequest := <-ch
+		self.dispatchMessage(clientRequest)
 	}
 }
 
@@ -249,11 +254,11 @@ func (self *PbftConsensusNode) setStopAndCleanUp() {
 func GatherAndSend(nodeID int, pl *log.Logger) {
 	// Process相关
 	b := BookingMsg{
-		AvgCpuTime:    meter.AvgCpuTime,
+		AvgCpuTime:    meter.AvgCpuPercent,
 		DiskMetric:    meter.DiskMetric,
 		TotalUpload:   meter.TotalUpload,
 		TotalDownload: meter.TotalDownload,
-		TotalTime:     uint64(time.Since(meter.Time_Begin)),
+		TotalTime:     int64(time.Since(meter.Time_Begin)),
 		NodeId:        nodeID,
 	}
 	m, err := json.Marshal(b)

@@ -89,6 +89,10 @@ func (tat *TestModule_avgTPS_Relay) OutputRecord() (perEpochTPS []float64, total
 	return
 }
 
+func fmtTxPerSec(v float64) string {
+	return fmt.Sprintf("%.2f txs/s", v)
+}
+
 func (tat *TestModule_avgTPS_Relay) GetDesc() metrics.Desc {
 
 	b := metrics.NewDescBuilder("交易共识频率(AverageTPS)", "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒")
@@ -101,7 +105,7 @@ func (tat *TestModule_avgTPS_Relay) GetDesc() metrics.Desc {
 	lTime := time.Time{}
 	for eid, exTxNum := range tat.excutedTxNum {
 		timeGap := tat.endTime[eid].Sub(tat.startTime[eid]).Seconds()
-		b.AddElem(fmt.Sprintf("第%v批次 交易共识频率", eid+1), fmt.Sprintf("第%v批次过程中产生交易的交易共识频率", eid+1), exTxNum/timeGap)
+		b.AddElem(fmt.Sprintf("第%v批次 交易共识频率", eid+1), fmt.Sprintf("第%v批次过程中产生交易的交易共识频率", eid+1), fmtTxPerSec(exTxNum/timeGap))
 		perEpochTPS[eid] = exTxNum / timeGap
 		totalTxNum += exTxNum
 		if eTime.After(tat.startTime[eid]) {
@@ -112,7 +116,7 @@ func (tat *TestModule_avgTPS_Relay) GetDesc() metrics.Desc {
 		}
 	}
 	totalTPS = totalTxNum / (lTime.Sub(eTime).Seconds())
-	b.AddElem("总交易共识频率", "整个过程中平均每秒产生的交易", totalTPS)
+	b.AddElem("总交易共识频率", "整个过程中平均每秒产生的交易", fmtTxPerSec(totalTPS))
 	return b.GetDesc()
 
 }

@@ -9,7 +9,9 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
-var AvgCpuTime float64
+var AvgCpuPercent float64
+
+var cpuSampleCnt int
 var DiskMetric uint64
 var diskSampleCnt int
 
@@ -33,12 +35,14 @@ func StartPs() {
 			if stop.Load() {
 				return
 			}
-			i, err := p.Times()
-			t := i.Total()
+			i, err := p.CPUPercent()
+			t := i
 			if err != nil {
 				panic("Wrong")
 			}
-			AvgCpuTime = t
+			// AvgCpuTime = t
+			AvgCpuPercent = (AvgCpuPercent*float64(cpuSampleCnt) + t) / (float64(cpuSampleCnt) + 1)
+			cpuSampleCnt++
 		}
 	}()
 

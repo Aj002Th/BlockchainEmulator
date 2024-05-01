@@ -110,10 +110,10 @@ type BookingMsg struct {
 	DiskMetric uint64  `json:"disk"`
 	// TxCount       uint64  `json:"txc"`
 	// BlockCount    uint64  `json:"bc"`
-	TotalUpload   int    `json:"tu"`
-	TotalDownload int    `json:"td"`
-	TotalTime     uint64 `json:"tm"`
-	NodeId        int    `json:"nodeid"`
+	TotalUpload   int   `json:"tu"`
+	TotalDownload int   `json:"td"`
+	TotalTime     int64 `json:"tm"`
+	NodeId        int   `json:"nodeid"`
 }
 
 type KeepAliveMsg struct {

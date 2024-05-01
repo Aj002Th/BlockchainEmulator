@@ -30,6 +30,7 @@ func NewTcpCustomProtocolNetwork() *TcpCustomProtocolNetwork {
 		OnUpload:       signal.NewAsyncSignalImpl[int]("TcpOnUpload"),
 		OnDownload:     signal.NewAsyncSignalImpl[int]("TcpOnDownload"),
 		logger:         *log.Default(),
+		recvChan:       make(chan []byte),
 	}
 }
 
@@ -111,6 +112,7 @@ func (d *TcpCustomProtocolNetwork) startSession(con net.Conn) {
 	clientReader := bufio.NewReader(con)
 	for {
 		clientRequest, err := clientReader.ReadBytes('\n')
+		d.OnDownload.Emit(len(clientRequest))
 		switch err {
 		case nil:
 			d.tcpLock.Lock()
