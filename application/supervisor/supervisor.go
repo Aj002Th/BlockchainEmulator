@@ -44,8 +44,11 @@ type Supervisor struct {
 	OnNodeStart     sig.Signal[struct{}]
 
 	cntBooking int
-	bookings   []pbft.Booking
+	bookings   []pbft.BookingMsg
 	result     chan []metrics.Desc
+
+	waitOnce        func()
+	waitMasterReady chan struct{}
 }
 
 var log1 = supervisor_log.Log1
@@ -70,6 +73,12 @@ func NewSupervisor() *Supervisor {
 
 	d.result = make(chan []metrics.Desc)
 
+	// 主节点 keep alive 相关处理
+	d.waitMasterReady = make(chan struct{})
+	d.waitOnce = sync.OnceFunc(func() {
+		d.waitMasterReady <- struct{}{}
+	})
+
 	return d
 }
 
@@ -92,7 +101,7 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 	log1.Printf("received from shard %d in epoch %d.\n", m.SenderShardID, m.Epoch)
 
 	d.txCompleteCount += len(m.ExcutedTxs)
-	webapi.G_Proxy.Enqueue(webapi.Computing(params.TotalDataSize, d.txCompleteCount))
+	webapi.GlobalProxy.Enqueue(webapi.Computing(params.TotalDataSize, d.txCompleteCount))
 
 	pbftItem := webapi.PbftItem{TxpoolSize: int(m.TxpoolSize), Tx: len(m.ExcutedTxs), Ctx: int(m.Relay1TxNum)}
 	d.pbftItems = append(d.pbftItems, pbftItem)
@@ -101,20 +110,29 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 	// add codes here ...
 }
 
-func (d *Supervisor) handleBooking(m *pbft.Booking) {
+func (d *Supervisor) handleBookingMsg(m *pbft.BookingMsg) {
 	d.cntBooking++
 	d.bookings = append(d.bookings, *m)
-	d.sl.Slog.Printf("handleBooking, cnt = %v\n", d.cntBooking)
+	d.sl.Slog.Printf("handleBookingMsg, cnt = %v\n", d.cntBooking)
 	if d.cntBooking == params.NodeNum {
 		result := meter.GetResult(&d.bookings)
-		d.sl.Slog.Printf("handleBooking now got result: %v\n", result)
-		d.sl.Slog.Printf("handleBooking now writing to channel\n")
+		d.sl.Slog.Printf("handleBookingMsg now got result: %v\n", result)
+		d.sl.Slog.Printf("handleBookingMsg now writing to channel\n")
 		d.result <- result
 	}
 }
 
+func (d *Supervisor) handleKeepAliveMsg(m *pbft.KeepAliveMsg) {
+	d.waitOnce()
+}
+
+func (d *Supervisor) Wait() {
+	<-d.waitMasterReady
+	time.Sleep(time.Second)
+}
+
 func (d *Supervisor) Run() {
-	webapi.G_Proxy.Enqueue(webapi.Started)
+	webapi.GlobalProxy.Enqueue(webapi.Started)
 	meter.SupSideStart()
 
 	// 起一个听的循环
@@ -150,7 +168,15 @@ func (d *Supervisor) dispatchMessage(msg []byte) {
 		log1.Printf("Received a %v: %v\n", msgType, string(content))
 	}
 	switch msgType {
-	case pbft.CBlockInfo:
+	case pbft.CKeepAlive: // 用于确认主节点的启动情况
+		m := new(pbft.KeepAliveMsg)
+		err := json.Unmarshal(content, m)
+		if err != nil {
+			log.Panic()
+		}
+		d.handleKeepAliveMsg(m)
+
+	case pbft.CBlockInfo: // 统计区块相关指标
 		m := new(pbft.BlockInfoMsg)
 		err := json.Unmarshal(content, m)
 		if err != nil {
@@ -159,16 +185,17 @@ func (d *Supervisor) dispatchMessage(msg []byte) {
 		d.handleBlockInfoMsg(m)
 		si := sig.GetSignalByName[*pbft.BlockInfoMsg]("OnBimReached")
 		si.Emit(m)
-		// add codes for more functionality
-	case pbft.CBooking:
-		m := new(pbft.Booking)
+
+	case pbft.CBooking: // 统计节点运行状态相关指标
+		m := new(pbft.BookingMsg)
 		err := json.Unmarshal(content, m)
 		if err != nil {
 			log.Panic()
 		}
-		d.handleBooking(m)
+		d.handleBookingMsg(m)
+
 	default:
-		panic("Message Unsupport")
+		panic("Message Unsupported")
 	}
 }
 
@@ -275,16 +302,16 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 		d.sl.Slog.Println(measureMod.OutputRecord())
 	}
 
-	// webapi.G_Proxy.Enqueue(webapi.Completed(d.pbftItems, measureItems))
+	// webapi.GlobalProxy.Enqueue(webapi.Completed(d.pbftItems, measureItems))
 
 	d.sl.Slog.Println("Now waiting for Other Node Bookings and result")
 
 	result := <-d.result
 	d.sl.Slog.Println("result generated")
 
-	webapi.G_Proxy.Enqueue(webapi.Completed1(d.pbftItems, result))
+	webapi.GlobalProxy.Enqueue(webapi.Completed1(d.pbftItems, result))
 
 	network.Tcp.Close()
 	d.tcpLn.Close()
-	webapi.G_Proxy.Enqueue(webapi.Bye)
+	webapi.GlobalProxy.Enqueue(webapi.Bye)
 }

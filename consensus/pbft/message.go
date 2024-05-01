@@ -25,8 +25,9 @@ const (
 
 	CBlockInfo MessageType = "BlockInfo"
 	CSeqIDinfo MessageType = "SequenceID"
+	CBooking   MessageType = "Booking"
 
-	CBooking MessageType = "Booking"
+	CKeepAlive MessageType = "KeepAlive"
 )
 
 var (
@@ -104,7 +105,7 @@ type BlockInfoMsg struct {
 	TxpoolSize int
 }
 
-type Booking struct {
+type BookingMsg struct {
 	AvgCpuTime float64 `json:"avgCpuTime"`
 	DiskMetric uint64  `json:"disk"`
 	// TxCount       uint64  `json:"txc"`
@@ -113,6 +114,10 @@ type Booking struct {
 	TotalDownload int    `json:"td"`
 	TotalTime     uint64 `json:"tm"`
 	NodeId        int    `json:"nodeid"`
+}
+
+type KeepAliveMsg struct {
+	Msg string `json:"msg"`
 }
 
 type SeqIDinfo struct {
@@ -149,7 +154,7 @@ func MergeAndSend(t MessageType, content []byte, addr string, logger *log.Logger
 		logger.Printf("Sending a %v: %v\n", t, string(content))
 	}
 
-	msg_send := MergeMessage(t, content)
+	msgSend := MergeMessage(t, content)
 
-	network.Tcp.Send(msg_send, addr)
+	network.Tcp.Send(msgSend, addr)
 }

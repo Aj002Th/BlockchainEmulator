@@ -13,7 +13,7 @@ import (
 )
 
 type Void = struct{}
-type Booking = pbft.Booking
+type Booking = pbft.BookingMsg
 
 func SupSideStart() {
 	StartCommitRelate()

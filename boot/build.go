@@ -1,17 +1,15 @@
 package boot
 
 import (
-	"os"
-	"os/exec"
-	"path"
-	"strconv"
-	"time"
-
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
 	"github.com/Aj002Th/BlockchainEmulator/params"
+	"os"
+	"os/exec"
+	"path"
+	"strconv"
 )
 
 // 初始化params。原params内容只是Preset，现在覆写它。包括Endpoint列表、输出路径。
@@ -51,26 +49,22 @@ func makeChainConfig(nid uint64) *chain.Config {
 func BuildSupervisor(self *App) {
 	println("Build Sup")
 	if self.args.frontend {
-		webapi.G_Proxy = webapi.NewGoodApiProxy()
+		webapi.GlobalProxy = webapi.NewGoodApiProxy()
 		go webapi.RunApiServer()
 		go webapi.RunFrontendServer()
 		exec.Command("explorer.exe", "http://localhost:3000/monitor.html").Start() // 把浏览器拉起来
 	} else {
-		webapi.G_Proxy = webapi.DumbProxy{}
+		webapi.GlobalProxy = webapi.DumbProxy{}
 	}
 
-	webapi.G_Proxy.Enqueue(webapi.Hello)
+	webapi.GlobalProxy.Enqueue(webapi.Hello)
 
 	sup := supervisor.NewSupervisor()
-	time.Sleep(10000 * time.Millisecond) // TODO: 去掉丑陋的Sleep
+	sup.Wait()
 	sup.Run()
 }
 
 func BuildNewPbftNode(nid, nnm uint64) {
 	worker := pbft.NewPbftNode(nid, makeChainConfig(nid))
-	if nid == 0 {
-		worker.Run()
-	} else {
-		worker.Run()
-	}
+	worker.Run()
 }
