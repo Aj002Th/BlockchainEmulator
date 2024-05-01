@@ -9,8 +9,11 @@ import (
 	"github.com/shirou/gopsutil/process"
 )
 
-var AvgCpuTime float64
+var AvgCpuPercent float64
+
+var cpuSampleCnt int
 var DiskMetric uint64
+var diskSampleCnt int
 
 type Nothing = struct{}
 type Void = struct{}
@@ -27,29 +30,36 @@ func StartPs() {
 	sig.Connect(func(data Nothing) { stop.Store(true) })
 
 	go func() {
-		time.Sleep(1000)
-		if stop.Load() {
-			return
+		for {
+			time.Sleep(1000)
+			if stop.Load() {
+				return
+			}
+			i, err := p.CPUPercent()
+			t := i
+			if err != nil {
+				panic("Wrong")
+			}
+			// AvgCpuTime = t
+			AvgCpuPercent = (AvgCpuPercent*float64(cpuSampleCnt) + t) / (float64(cpuSampleCnt) + 1)
+			cpuSampleCnt++
 		}
-		i, err := p.Times()
-		t := i.Total()
-		if err != nil {
-			panic("Wrong")
-		}
-		AvgCpuTime = t
 	}()
 
 	go func() {
-		time.Sleep(1000)
-		if stop.Load() {
-			return
+		for {
+			time.Sleep(1000)
+			if stop.Load() {
+				return
+			}
+			i, err := p.MemoryInfo()
+			t := i.RSS
+			if err != nil {
+				panic("Wrong")
+			}
+			DiskMetric = (DiskMetric*uint64(diskSampleCnt) + t) / uint64(diskSampleCnt+1)
+			diskSampleCnt++
 		}
-		i, err := p.MemoryInfo()
-		t := i.RSS
-		if err != nil {
-			panic("Wrong")
-		}
-		DiskMetric = t
 	}()
 
 }

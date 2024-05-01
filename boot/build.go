@@ -1,15 +1,16 @@
 package boot
 
 import (
+	"os"
+	"os/exec"
+	"path"
+	"strconv"
+
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
 	"github.com/Aj002Th/BlockchainEmulator/params"
-	"os"
-	"os/exec"
-	"path"
-	"strconv"
 )
 
 // 初始化params。原params内容只是Preset，现在覆写它。包括Endpoint列表、输出路径。
@@ -60,7 +61,6 @@ func BuildSupervisor(self *App) {
 	webapi.GlobalProxy.Enqueue(webapi.Hello)
 
 	sup := supervisor.NewSupervisor()
-	sup.Wait()
 	sup.Run()
 }
 

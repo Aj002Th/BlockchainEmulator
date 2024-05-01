@@ -10,6 +10,6 @@ func StartNet() {
 		TotalUpload += data
 	})
 	network.Tcp.OnDownload.Connect(func(data int) {
-		TotalUpload += data
+		TotalDownload += data
 	})
 }

@@ -76,6 +76,7 @@ func NewSupervisor() *Supervisor {
 	// 主节点 keep alive 相关处理
 	d.waitMasterReady = make(chan struct{})
 	d.waitOnce = sync.OnceFunc(func() {
+		println("OnceFunc called")
 		d.waitMasterReady <- struct{}{}
 	})
 
@@ -137,6 +138,8 @@ func (d *Supervisor) Run() {
 
 	// 起一个听的循环
 	go d.doAccept()
+
+	d.Wait()
 
 	// 无脑发送全部东西给主节点。
 	d.cmt.MsgSendingControl()
@@ -220,18 +223,24 @@ func (d *Supervisor) startSession(con net.Conn) {
 }
 
 func (d *Supervisor) doAccept() { // 不停听并且起goroutine
-	ln, err := net.Listen("tcp", params.SupervisorEndpoint)
-	if err != nil {
-		log.Panic(err)
-	}
-	d.tcpLn = ln
+	// ln, err := net.Listen("tcp", params.SupervisorEndpoint)
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
+	// d.tcpLn = ln
+	// for {
+	// 	conn, err := d.tcpLn.Accept()
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// 	log1.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
+	// 	go d.startSession(conn)
+	// }
+	ch := network.Tcp.Serve(params.SupervisorEndpoint)
 	for {
-		conn, err := d.tcpLn.Accept()
-		if err != nil {
-			return
-		}
-		log1.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
-		go d.startSession(conn)
+		clientRequest := <-ch
+		log.Printf("Receiving %v", clientRequest)
+		d.dispatchMessage(clientRequest)
 	}
 }
 

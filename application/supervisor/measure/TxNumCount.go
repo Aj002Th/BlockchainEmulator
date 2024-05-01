@@ -56,10 +56,10 @@ func (ttnc *TestTxNumCount_Relay) GetDesc() metrics.Desc {
 	perEpochCTXs = make([]float64, 0)
 	totTxNum = 0.0
 	for i, tn := range ttnc.txNum {
-		b.AddElem(fmt.Sprintf("第%v批次 交易计数（个）", i+1), fmt.Sprintf("第%v批次交易的数量", i+1), tn)
+		b.AddElem(fmt.Sprintf("第%v批次 交易计数", i+1), fmt.Sprintf("第%v批次交易的数量", i+1), fmt.Sprintf("%v 个", tn))
 		perEpochCTXs = append(perEpochCTXs, tn)
 		totTxNum += tn
 	}
-	b.AddElem("总交易计数（个）", "总的交易数量统计", totTxNum)
+	b.AddElem("总交易计数", "总的交易数量统计", fmt.Sprintf("%v 个", totTxNum))
 	return b.GetDesc()
 }
