@@ -157,6 +157,8 @@ func (d *Supervisor) dispatchMessage(msg []byte) {
 			log.Panic()
 		}
 		d.handleBlockInfoMsg(m)
+		si := sig.GetSignalByName[*pbft.BlockInfoMsg]("OnBimReached")
+		si.Emit(m)
 		// add codes for more functionality
 	case pbft.CBooking:
 		m := new(pbft.Booking)
