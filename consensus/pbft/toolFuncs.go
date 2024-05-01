@@ -31,14 +31,14 @@ func (self *PbftConsensusNode) set2DMap(isPrePareConfirm bool, key string, val *
 // get neighbor nodes in a shard
 func (self *PbftConsensusNode) getNeighborNodes() []string {
 	receiverNodes := make([]string, 0)
-	for _, ip := range self.ip_nodeTable[self.ShardID] {
+	for _, ip := range self.ipNodeTable[self.ShardID] {
 		receiverNodes = append(receiverNodes, ip)
 	}
 	return receiverNodes
 }
 
 func (self *PbftConsensusNode) writeCSVline(str []string) {
-	dirpath := path.Join(params.DataWrite_path, "pbft_"+strconv.Itoa(int(1)))
+	dirpath := path.Join(params.DataWritePath, "pbft_"+strconv.Itoa(int(1)))
 	err := os.MkdirAll(dirpath, os.ModePerm)
 	if err != nil {
 		log.Panic(err)

@@ -34,27 +34,27 @@ type PbftConsensusNode struct {
 
 	// the global config about pbft
 	pbftChainConfig *chain.Config                // the chain config in this pbft
-	ip_nodeTable    map[uint64]map[uint64]string // denote the ip of the specific node
-	node_nums       uint64                       // the number of nodes in this pfbt, denoted by N
-	malicious_nums  uint64                       // f, 3f + 1 = N
+	ipNodeTable     map[uint64]map[uint64]string // denote the ip of the specific node
+	nodeNums        uint64                       // the number of nodes in this pbft, denoted by N
+	maliciousNums   uint64                       // f, 3f + 1 = N
 	view            uint64                       // denote the view of this pbft, the main node can be inferred from this variant
 
 	// the control message and message checking utils in pbft
 	sequenceID        uint64                    // the message sequence id of the pbft
 	stop              bool                      // send stop signal
-	pStop             chan uint64               // channle for stopping consensus
+	pStop             chan uint64               // channel for stopping consensus
 	requestPool       map[string]*Request       // RequestHash to Request
 	cntPrepareConfirm map[string]map[*Node]bool // count the prepare confirm message, [messageHash][Node]bool
 	cntCommitConfirm  map[string]map[*Node]bool // count the commit confirm message, [messageHash][Node]bool
-	isCommitBordcast  map[string]bool           // denote whether the commit is broadcast
-	isReply           map[string]bool           // denote whether the message is reply
+	isCommitBroadcast map[string]bool           // denote whether the commit is broadcast
+	isReply           map[string]bool           // denote whether the message is reply message
 	height2Digest     map[uint64]string         // sequence (block height) -> request, fast read
 
 	// locks about pbft
 	sequenceLock sync.Mutex // the lock of sequence
 	lock         sync.Mutex // lock the stage
-	askForLock   sync.Mutex // lock for asking for a serise of requests
-	stopLock     sync.Mutex // lock the stop varient
+	askForLock   sync.Mutex // lock for asking for a series of requests
+	stopLock     sync.Mutex // lock the stop variant
 
 	// seqID of other Shards, to synchronize
 	seqIDMap   map[uint64]uint64
@@ -69,24 +69,22 @@ type PbftConsensusNode struct {
 	// to handle the message in the pbft
 	ihm ExtraOpInConsensus
 
-	// to handle the message outside of pbft
+	// to handle the message outside pbft
 	ohm OpInterShards
 }
 
-// generate a pbft consensus for a node
+// NewPbftNode generate a pbft consensus for a node
 func NewPbftNode(nodeID uint64, pcc *chain.Config, messageHandleType string) *PbftConsensusNode {
 	self := new(PbftConsensusNode)
-	self.ip_nodeTable = params.IPmap_nodeTable
-	self.node_nums = pcc.Nodes_perShard
+	self.ipNodeTable = params.IPmapNodeTable
+	self.nodeNums = pcc.NodesNum
 	self.ShardID = 0
 	self.NodeID = nodeID
 	self.pbftChainConfig = pcc
+
 	var err error
 	self.db = blockStorage.NewBoltStorage(uint(nodeID))
 	self.sb = stateStorage.NewMemKVStore()
-	if err != nil {
-		log.Panic(err)
-	}
 	self.CurChain, err = chain.NewBlockChain(pcc, self.sb, self.db)
 	if err != nil {
 		log.Panic("cannot new a blockchain")
@@ -95,7 +93,7 @@ func NewPbftNode(nodeID uint64, pcc *chain.Config, messageHandleType string) *Pb
 	self.RunningNode = &Node{
 		NodeID:  nodeID,
 		ShardID: 0,
-		IPaddr:  self.ip_nodeTable[0][nodeID],
+		IPaddr:  self.ipNodeTable[0][nodeID],
 	}
 
 	self.stop = false
@@ -104,20 +102,18 @@ func NewPbftNode(nodeID uint64, pcc *chain.Config, messageHandleType string) *Pb
 	self.requestPool = make(map[string]*Request)
 	self.cntPrepareConfirm = make(map[string]map[*Node]bool)
 	self.cntCommitConfirm = make(map[string]map[*Node]bool)
-	self.isCommitBordcast = make(map[string]bool)
+	self.isCommitBroadcast = make(map[string]bool)
 	self.isReply = make(map[string]bool)
 	self.height2Digest = make(map[uint64]string)
-	self.malicious_nums = (self.node_nums - 1) / 3
+	self.maliciousNums = (self.nodeNums - 1) / 3
 	self.view = 0
-
 	self.seqIDMap = make(map[uint64]uint64)
-
 	self.pl = misc.NewPbftLog(0, nodeID)
 
 	base.NodeLog = self.pl
 
 	// choose how to handle the messages in pbft or beyond pbft
-	switch string(messageHandleType) {
+	switch messageHandleType {
 	default:
 		self.ihm = &RawRelayPbftExtraHandleMod{
 			node: self,
@@ -195,7 +191,7 @@ func (self *PbftConsensusNode) startSession(con net.Conn) {
 func (self *PbftConsensusNode) Run() {
 	meter.NodeSideStart()
 	if self.NodeID == 0 {
-		println("well my nodeid is 0 so i will do propose")
+		println("well my node_id is 0 so i will do propose")
 		go self.doPropose()
 	}
 	self.doAccept()
@@ -239,9 +235,9 @@ func (self *PbftConsensusNode) setStopAndCleanUp() {
 	self.pl.Println("handled stop message")
 }
 
-func GatherAndSend(nodeid int, pl *log.Logger) {
+func GatherAndSend(nodeID int, pl *log.Logger) {
 	// Procs相关
-	b := Booking{AvgCpuTime: meter.AvgCpuTime, DiskMetric: meter.DiskMetric, TotalUpload: meter.TotalUpload, TotalDownload: meter.TotalDownload, TotalTime: uint64(time.Since(meter.Time_Begin)), NodeId: nodeid}
+	b := Booking{AvgCpuTime: meter.AvgCpuTime, DiskMetric: meter.DiskMetric, TotalUpload: meter.TotalUpload, TotalDownload: meter.TotalDownload, TotalTime: uint64(time.Since(meter.Time_Begin)), NodeId: nodeID}
 	m, err := json.Marshal(b)
 	if err != nil {
 		panic(err)
@@ -261,7 +257,7 @@ func (self *PbftConsensusNode) doPropose() {
 			return
 		default:
 		}
-		time.Sleep(time.Duration(int64(params.Block_Interval)) * time.Millisecond) // 不停睡觉-propose循环。（发Preprepare）
+		time.Sleep(time.Duration(int64(params.BlockInterval)) * time.Millisecond) // 不停睡觉-propose循环。（发PrePrepare）
 
 		self.sequenceLock.Lock() // 他这个设计有毒的。他拿锁当信号量用。Mutex不是有假唤醒什么的么，不能这么用的。。。。。醉了。。。。
 		self.pl.Printf("S%dN%d get sequenceLock locked, now trying to propose...\n", self.ShardID, self.NodeID)
@@ -296,6 +292,6 @@ func MergeAndBroadcast(t MessageType, data []byte, from string, to []string, log
 	} else {
 		logger.Printf("Broadcasting a %v: %v", t, string(data[:2000]))
 	}
-	msg_send := MergeMessage(t, data)
-	network.Tcp.Broadcast(from, to, msg_send)
+	msgSend := MergeMessage(t, data)
+	network.Tcp.Broadcast(from, to, msgSend)
 }

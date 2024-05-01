@@ -5,13 +5,14 @@ import (
 	"log"
 )
 
+// RawRelayOutsideModule
 // This module used in the blockChain using transaction relaying mechanism.
 // "Raw" means that the pbft only make block consensus.
 type RawRelayOutsideModule struct {
 	node *PbftConsensusNode
 }
 
-// msgType canbe defined in message
+// HandleMessageOutsidePBFT msgType canbe defined in message
 func (self *RawRelayOutsideModule) HandleMessageOutsidePBFT(msgType MessageType, content []byte) bool {
 	switch msgType {
 	case CInject:

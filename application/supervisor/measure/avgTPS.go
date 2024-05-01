@@ -90,7 +90,6 @@ func (tat *TestModule_avgTPS_Relay) OutputRecord() (perEpochTPS []float64, total
 }
 
 func (tat *TestModule_avgTPS_Relay) GetDesc() metrics.Desc {
-
 	b := metrics.NewDescBuilder("TPS avg", "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒")
 
 	var perEpochTPS []float64
@@ -114,5 +113,4 @@ func (tat *TestModule_avgTPS_Relay) GetDesc() metrics.Desc {
 	totalTPS = totalTxNum / (lTime.Sub(eTime).Seconds())
 	b.AddElem("TotalTPS", "", totalTPS)
 	return b.GetDesc()
-
 }

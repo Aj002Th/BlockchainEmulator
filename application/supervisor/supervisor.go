@@ -30,7 +30,7 @@ import (
 )
 
 type Supervisor struct {
-	Ip_nodeTable      map[uint64]map[uint64]string  // basic infos
+	IpNodeTable       map[uint64]map[uint64]string  // basic infos
 	tcpLn             net.Listener                  // tcp control
 	tcpLock           sync.Mutex                    // listenStop bool
 	sl                *supervisor_log.SupervisorLog // logger module
@@ -52,11 +52,11 @@ var log1 = supervisor_log.Log1
 
 func NewSupervisor() *Supervisor {
 	d := &Supervisor{}
-	d.Ip_nodeTable = params.IPmap_nodeTable
+	d.IpNodeTable = params.IPmapNodeTable
 	d.sl = supervisor_log.NewSupervisorLog()
 	d.Ss = signal.NewStopSignal(2 * int(1))
 	d.blockPostedSignal = sig.NewAsyncSignalImpl[pbft.BlockInfoMsg]("xx")
-	d.cmt = committee.NewRelayCommitteeModule(d.Ip_nodeTable, d.Ss, d.sl, params.FileInput, params.TotalDataSize, params.BatchSize)
+	d.cmt = committee.NewRelayCommitteeModule(d.IpNodeTable, d.Ss, d.sl, params.FileInput, params.TotalDataSize, params.BatchSize)
 	d.testMeasureMods = make([]measure.MeasureModule, 0)
 	d.txCompleteCount = 0
 
@@ -133,7 +133,7 @@ func (d *Supervisor) Run() {
 
 	for nid := uint64(0); nid < uint64(params.NodeNum); nid++ {
 		log1.Printf("Sending a %v: %v\n", pbft.CStop, string([]byte("this is a stop message~")))
-		pbft.MergeAndSend(pbft.CStop, []byte("this is a stop message~"), d.Ip_nodeTable[0][nid], log1)
+		pbft.MergeAndSend(pbft.CStop, []byte("this is a stop message~"), d.IpNodeTable[0][nid], log1)
 	}
 
 	d.sl.Slog.Println("Supervisor: now Closing. Now Generate Metrics Outputs.")
@@ -216,7 +216,7 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 
 	d.sl.Slog.Println("Before input .csv")
 	// write to .csv file
-	dirpath := path.Join(params.DataWrite_path, "supervisor_measureOutput/")
+	dirpath := path.Join(params.DataWritePath, "supervisor_measureOutput/")
 	err := os.MkdirAll(dirpath, os.ModePerm)
 	if err != nil {
 		log.Panic(err)

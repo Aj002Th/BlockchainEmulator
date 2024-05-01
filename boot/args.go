@@ -13,7 +13,7 @@ type Args struct {
 	batch    bool
 }
 
-// 旨在顺手把params里的值也设置了。也就是说params里的值是Preset。当然后期还要加一些逻辑。
+// ParseAndBuildArg 旨在顺手把params里的值也设置了。也就是说params里的值是Preset。当然后期还要加一些逻辑。
 func ParseAndBuildArg() Args {
 	var a Args
 	pflag.IntVarP(&a.nodeNum, "nodeNum", "N", 3, "indicate how many nodes of each shard are deployed")

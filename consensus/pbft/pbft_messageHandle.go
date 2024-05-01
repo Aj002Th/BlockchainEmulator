@@ -59,7 +59,7 @@ func (self *PbftConsensusNode) handlePrepare(pmsg *Prepare) {
 			cnt++
 		}
 		// the main node will not send the prepare message
-		specifiedcnt := int(2 * self.malicious_nums)
+		specifiedcnt := int(2 * self.maliciousNums)
 		if self.NodeID != self.view {
 			specifiedcnt -= 1
 		}
@@ -67,7 +67,7 @@ func (self *PbftConsensusNode) handlePrepare(pmsg *Prepare) {
 		// if the node has received 2f messages (itself included), and it haven't committed, then it commit
 		self.lock.Lock()
 		defer self.lock.Unlock()
-		if cnt >= specifiedcnt && !self.isCommitBordcast[string(pmsg.Digest)] {
+		if cnt >= specifiedcnt && !self.isCommitBroadcast[string(pmsg.Digest)] {
 			self.pl.Printf("S%dN%d : is going to commit\n", self.ShardID, self.NodeID)
 			// generate commit and broadcast
 			c := Commit{
@@ -79,7 +79,7 @@ func (self *PbftConsensusNode) handlePrepare(pmsg *Prepare) {
 			if err != nil {
 				log.Panic()
 			}
-			self.isCommitBordcast[string(pmsg.Digest)] = true
+			self.isCommitBroadcast[string(pmsg.Digest)] = true
 			MergeAndBroadcast(CCommit, commitByte, self.RunningNode.IPaddr, self.getNeighborNodes(), self.pl)
 		}
 	}
@@ -97,7 +97,7 @@ func (self *PbftConsensusNode) handleCommit(cmsg *Commit) {
 	self.lock.Lock()
 	defer self.lock.Unlock()
 	// the main node will not send the prepare message
-	required_cnt := int(2 * self.malicious_nums)
+	required_cnt := int(2 * self.maliciousNums)
 	if cnt >= required_cnt && !self.isReply[string(cmsg.Digest)] {
 		self.pl.Printf("S%dN%d : has received 2f + 1 commits ... \n", self.ShardID, self.NodeID)
 		// if this node is left behind, so it need to requst blocks
@@ -108,7 +108,7 @@ func (self *PbftConsensusNode) handleCommit(cmsg *Commit) {
 			sn := &Node{
 				NodeID:  self.view,
 				ShardID: self.ShardID,
-				IPaddr:  self.ip_nodeTable[self.ShardID][self.view],
+				IPaddr:  self.ipNodeTable[self.ShardID][self.view],
 			}
 			orequest := RequestOldMessage{
 				SeqStartHeight: self.sequenceID + 1,

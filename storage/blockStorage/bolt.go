@@ -32,9 +32,9 @@ type BoltStorage struct {
 // nodeID指代节点的唯一ID
 func NewBoltStorage(nodeID uint) *BoltStorage {
 	// 保证存放数据库文件的路径存在
-	_, errStat := os.Stat(params.RecordWrite_path)
+	_, errStat := os.Stat(params.RecordWritePath)
 	if os.IsNotExist(errStat) {
-		errMkdir := os.MkdirAll(params.RecordWrite_path, os.ModePerm)
+		errMkdir := os.MkdirAll(params.RecordWritePath, os.ModePerm)
 		if errMkdir != nil {
 			log.Panic(errMkdir)
 		}
@@ -43,7 +43,7 @@ func NewBoltStorage(nodeID uint) *BoltStorage {
 	}
 
 	dbFileName := fmt.Sprintf("node_%d.db", nodeID)
-	dbFilePath := path.Join(params.RecordWrite_path, dbFileName)
+	dbFilePath := path.Join(params.RecordWritePath, dbFileName)
 	s := &BoltStorage{
 		dbFilePath:            dbFilePath,
 		blockBucket:           blockBucket,
