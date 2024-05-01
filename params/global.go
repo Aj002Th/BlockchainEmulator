@@ -2,7 +2,7 @@ package params
 
 var (
 	IPmapNodeTable  = make(map[uint64]map[uint64]string)
-	MeasureRelayMod = []string{"TPS_Relay", "TCL_Relay", "CrossTxRate_Relay", "TxNumberCount_Relay"}
+	MeasurePbftMod  = []string{"TPS_Pbft", "TCL_Pbft", "CrossTxRate_Pbft", "TxNumberCount_Pbft"}
 	EnabledMeasures = []string{"CPU", "Disk", "TPS", "TCL", "TxCount"}
 	Meter_CPU       = true // 控制输出的度量
 	Meter_Disk      = true

@@ -177,6 +177,14 @@ func (t *TcpCustomProtocolNetwork) readFromConn(addr string) {
 	}
 }
 
+func (t *TcpCustomProtocolNetwork) GetOnUpload() signal.Signal[int] {
+	return t.OnUpload
+}
+
+func (t *TcpCustomProtocolNetwork) GetOnDownload() signal.Signal[int] {
+	return t.OnDownload
+}
+
 func (t *TcpCustomProtocolNetwork) UpdateMetric(up int, down int) { // 单位是字节数
 	t.OnUpload.Emit(up)
 	t.OnDownload.Emit(down)
@@ -196,5 +204,3 @@ func readMessage(buffer *bytes.Buffer) (string, error) {
 // 	t := NewTcpCustomProtocolNetwork()
 // 	return t.Send
 // }()
-
-var Tcp = NewTcpCustomProtocolNetwork()

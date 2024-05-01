@@ -14,8 +14,8 @@ import (
 )
 
 // simple implementation of pbftHandleModule interface ...
-// only for block request and use transaction relay
-type RawRelayPbftExtraHandleMod struct {
+// only for block request and use transaction pbft
+type RawPbftPbftExtraHandleMod struct {
 	node *PbftConsensusNode
 	// pointer to pbft data
 }
@@ -23,7 +23,7 @@ type RawRelayPbftExtraHandleMod struct {
 // propose request with different types
 // 调用GenerateBlock产生一个区块。其实这个做的就是从交易池子里取出至多n个交易，并且弄成一个新区块。
 // 更骚的是，没有新区块也会照样执行不误。。。所以Sup不给主节点东西他也会一直自娱自乐。
-func (self *RawRelayPbftExtraHandleMod) HandleinPropose() (bool, *Request) {
+func (self *RawPbftPbftExtraHandleMod) HandleinPropose() (bool, *Request) {
 	// new blocks
 	block := self.node.CurChain.GenerateBlock()
 	r := &Request{
@@ -36,7 +36,7 @@ func (self *RawRelayPbftExtraHandleMod) HandleinPropose() (bool, *Request) {
 }
 
 // the diy operation in preprepare
-func (self *RawRelayPbftExtraHandleMod) HandleinPrePrepare(ppmsg *PrePrepare) bool {
+func (self *RawPbftPbftExtraHandleMod) HandleinPrePrepare(ppmsg *PrePrepare) bool {
 	if self.node.CurChain.IsValidBlock(base.DecodeBlock(ppmsg.RequestMsg.Msg.Content)) != nil {
 		self.node.pl.Printf("S%dN%d : not a valid block\n", self.node.ShardID, self.node.NodeID)
 		return false
@@ -47,8 +47,8 @@ func (self *RawRelayPbftExtraHandleMod) HandleinPrePrepare(ppmsg *PrePrepare) bo
 	return true
 }
 
-// the operation in prepare, and in pbft + tx relaying, this function does not need to do any.
-func (self *RawRelayPbftExtraHandleMod) HandleinPrepare(pmsg *Prepare) bool {
+// the operation in prepare, and in pbft + tx pbfting, this function does not need to do any.
+func (self *RawPbftPbftExtraHandleMod) HandleinPrepare(pmsg *Prepare) bool {
 	fmt.Println("No operations are performed in Extra handle mod")
 	return true
 }
@@ -68,7 +68,7 @@ func PrintBlockChain(bc *chain.BlockChain) string {
 }
 
 // the operation in commit.
-func (self *RawRelayPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
+func (self *RawPbftPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 	r := self.node.requestPool[string(cmsg.Digest)]
 	// requestType ...
 	block := base.DecodeBlock(r.Msg.Content)
@@ -77,12 +77,12 @@ func (self *RawRelayPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 	self.node.pl.Printf("S%dN%d : added the block %d... \n", self.node.ShardID, self.node.NodeID, block.Header.Number)
 	PrintBlockChain(self.node.CurChain)
 
-	// now try to relay txs to other shards (for main nodes)
+	// now try to pbft txs to other shards (for main nodes)
 	if self.node.NodeID == self.node.view {
-		self.node.pl.Printf("S%dN%d : main node is trying to send relay txs at height = %d \n", self.node.ShardID, self.node.NodeID, block.Header.Number)
-		// generate relay pool and collect txs excuted
+		self.node.pl.Printf("S%dN%d : main node is trying to send pbft txs at height = %d \n", self.node.ShardID, self.node.NodeID, block.Header.Number)
+		// generate pbft pool and collect txs excuted
 		txExcuted := make([]*base.Transaction, 0)
-		relay1Txs := make([]*base.Transaction, 0)
+		pbft1Txs := make([]*base.Transaction, 0)
 		for _, tx := range block.Body {
 			txExcuted = append(txExcuted, tx)
 		}
@@ -92,8 +92,8 @@ func (self *RawRelayPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 			BlockBodyLength: len(block.Body),
 			ExcutedTxs:      txExcuted,
 			Epoch:           0,
-			Relay1Txs:       relay1Txs,
-			Relay1TxNum:     uint64(len(relay1Txs)),
+			Pbft1Txs:        pbft1Txs,
+			Pbft1TxNum:      uint64(len(pbft1Txs)),
 			SenderShardID:   self.node.ShardID,
 			ProposeTime:     r.ReqTime,
 			CommitTime:      time.Now(),
@@ -106,7 +106,7 @@ func (self *RawRelayPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 		MergeAndSend(CBlockInfo, bByte, params.SupervisorEndpoint, self.node.pl)
 		self.node.pl.Printf("S%dN%d : sended excuted txs\n", self.node.ShardID, self.node.NodeID)
 		self.node.CurChain.TransactionPool.Locked()
-		self.node.writeCSVline([]string{strconv.Itoa(len(self.node.CurChain.TransactionPool.Queue)), strconv.Itoa(len(txExcuted)), strconv.Itoa(int(bim.Relay1TxNum))})
+		self.node.writeCSVline([]string{strconv.Itoa(len(self.node.CurChain.TransactionPool.Queue)), strconv.Itoa(len(txExcuted)), strconv.Itoa(int(bim.Pbft1TxNum))})
 		self.node.CurChain.TransactionPool.Unlocked()
 	}
 	return true

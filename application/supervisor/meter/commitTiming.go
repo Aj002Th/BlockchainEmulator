@@ -20,11 +20,11 @@ func CommitFeed(bim *pbft.BlockInfoMsg) {
 }
 
 func StartCommitRelate() {
-	m1 = measure.NewTestModule_TCL_Relay()
-	m2 = measure.NewTestModule_avgTPS_Relay()
+	m1 = measure.NewTestModule_TCL_Pbft()
+	m2 = measure.NewTestModule_avgTPS_Pbft()
 	m3 = measure.NewPCL()
 	m4 = measure.NewBlockNumCount()
-	m6 = measure.NewTestTxNumCount_Relay()
+	m6 = measure.NewTestTxNumCount_Pbft()
 
 	sig := signal.GetSignalByName[*pbft.BlockInfoMsg]("OnBimReached")
 	sig.Connect(CommitFeed)

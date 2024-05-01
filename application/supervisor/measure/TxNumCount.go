@@ -8,23 +8,23 @@ import (
 )
 
 // to test cross-transaction rate
-type TestTxNumCount_Relay struct {
+type TestTxNumCount_Pbft struct {
 	epochID int
 	txNum   []float64
 }
 
-func NewTestTxNumCount_Relay() *TestTxNumCount_Relay {
-	return &TestTxNumCount_Relay{
+func NewTestTxNumCount_Pbft() *TestTxNumCount_Pbft {
+	return &TestTxNumCount_Pbft{
 		epochID: -1,
 		txNum:   make([]float64, 0),
 	}
 }
 
-func (ttnc *TestTxNumCount_Relay) OutputMetricName() string {
+func (ttnc *TestTxNumCount_Pbft) OutputMetricName() string {
 	return "Tx_number"
 }
 
-func (ttnc *TestTxNumCount_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
+func (ttnc *TestTxNumCount_Pbft) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	if b.BlockBodyLength == 0 { // empty block
 		return
 	}
@@ -38,7 +38,7 @@ func (ttnc *TestTxNumCount_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	ttnc.txNum[epochid] += float64(len(b.ExcutedTxs))
 }
 
-func (ttnc *TestTxNumCount_Relay) OutputRecord() (perEpochCTXs []float64, totTxNum float64) {
+func (ttnc *TestTxNumCount_Pbft) OutputRecord() (perEpochCTXs []float64, totTxNum float64) {
 	perEpochCTXs = make([]float64, 0)
 	totTxNum = 0.0
 	for _, tn := range ttnc.txNum {
@@ -48,7 +48,7 @@ func (ttnc *TestTxNumCount_Relay) OutputRecord() (perEpochCTXs []float64, totTxN
 	return perEpochCTXs, totTxNum
 }
 
-func (ttnc *TestTxNumCount_Relay) GetDesc() metrics.Desc {
+func (ttnc *TestTxNumCount_Pbft) GetDesc() metrics.Desc {
 	b := metrics.NewDescBuilder("交易数量统计", "对各个节点交易数量和总交易数量的统计")
 
 	var perEpochCTXs []float64

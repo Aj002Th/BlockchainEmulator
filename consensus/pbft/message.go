@@ -20,7 +20,7 @@ const (
 	CRequestOldrequest MessageType = "requestOldrequest"
 	CStop              MessageType = "stop"
 
-	CRelay  MessageType = "relay"
+	CPbft   MessageType = "pbft"
 	CInject MessageType = "inject"
 
 	CBlockInfo MessageType = "BlockInfo"
@@ -98,9 +98,9 @@ type BlockInfoMsg struct {
 	CommitTime    time.Time // record the commit time of this block (txs)
 	SenderShardID uint64
 
-	// for transaction relay
-	Relay1TxNum uint64              // the number of cross shard txs
-	Relay1Txs   []*base.Transaction // cross transactions in chain first time
+	// for transaction pbft
+	Pbft1TxNum uint64              // the number of cross shard txs
+	Pbft1Txs   []*base.Transaction // cross transactions in chain first time
 
 	TxpoolSize int
 }
