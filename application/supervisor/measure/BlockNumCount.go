@@ -47,10 +47,10 @@ func (ttnc *TestBlockNumCount) OutputRecord() ([]float64, float64) { // 输出�
 
 func (ttnc *TestBlockNumCount) GetDesc() metrics.Desc {
 	_ = "产生的区块总数计数，单位为 个."
-	b := metrics.NewDescBuilder("BCount", "Block count")
+	b := metrics.NewDescBuilder("产生区块数统计(BlockCount)", "对系统产生的区块数量的统计")
 	for i, v := range ttnc.bNum {
-		b.AddElem(fmt.Sprintf("Epoch %v", i+1), "", v)
+		b.AddElem(fmt.Sprintf("第%v批次 产生区块数", i+1), "各个批次对共识产生的区块数目的总计", v)
 	}
-	b.AddElem("Total", "", misc.Sum(ttnc.bNum))
+	b.AddElem("合计产生区块数", "整个运行过程中对共识产生的区块数目的总计", misc.Sum(ttnc.bNum))
 	return b.GetDesc()
 }

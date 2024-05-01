@@ -75,7 +75,7 @@ func (tctr *TestCrossTxRate_Relay) OutputRecord() (perEpochCTXratio []float64, t
 }
 
 func (tctr *TestCrossTxRate_Relay) GetDesc() metrics.Desc {
-	b := metrics.NewDescBuilder("TPS avg", "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒")
+	b := metrics.NewDescBuilder("跨交易率(CrossTxRate)", "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒")
 
 	var perEpochCTXratio []float64
 
@@ -83,16 +83,16 @@ func (tctr *TestCrossTxRate_Relay) GetDesc() metrics.Desc {
 	allEpoch_totTxNum := 0.0
 	allEpoch_ctxNum := 0.0
 	for eid, totTxN := range tctr.totTxNum {
-		b.AddElem(fmt.Sprintf("Epoch %v", eid), "", tctr.totCrossTxNum[eid]/totTxN)
+		b.AddElem(fmt.Sprintf("第%v批次 跨交易率", eid), "", tctr.totCrossTxNum[eid]/totTxN)
 		perEpochCTXratio = append(perEpochCTXratio, tctr.totCrossTxNum[eid]/totTxN)
 		allEpoch_totTxNum += totTxN
 		allEpoch_ctxNum += tctr.totCrossTxNum[eid]
 	}
 	perEpochCTXratio = append(perEpochCTXratio, allEpoch_totTxNum)
 	perEpochCTXratio = append(perEpochCTXratio, allEpoch_ctxNum)
-	b.AddElem("All Epoch Total Tx Num", "", allEpoch_totTxNum)
-	b.AddElem("All Epoch Ctx Num", "", allEpoch_ctxNum)
+	b.AddElem("交易数量总计", "All Epoch Total Tx Num", allEpoch_totTxNum)
+	b.AddElem("跨交易数量总计", "", allEpoch_ctxNum)
 
-	b.AddElem("Total CTX Ratio", "", allEpoch_ctxNum/allEpoch_totTxNum)
+	b.AddElem("总体跨交易率", "整个运行过程中的跨交易比率", allEpoch_ctxNum/allEpoch_totTxNum)
 	return b.GetDesc()
 }
