@@ -150,7 +150,7 @@ func (d *Supervisor) Run() {
 		time.Sleep(time.Second)
 	}
 	// send stop message
-	d.sl.Slog.Println("Supervisor: now sending cstop message to all nodes")
+	d.sl.Slog.Println("Supervisor: now sending stop message to all nodes")
 
 	for nid := uint64(0); nid < uint64(params.NodeNum); nid++ {
 		log1.Printf("Sending a %v: %v\n", pbft.CStop, string([]byte("this is a stop message~")))
@@ -222,20 +222,7 @@ func (d *Supervisor) startSession(con net.Conn) {
 	}
 }
 
-func (d *Supervisor) doAccept() { // 不停听并且起goroutine
-	// ln, err := net.Listen("tcp", params.SupervisorEndpoint)
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
-	// d.tcpLn = ln
-	// for {
-	// 	conn, err := d.tcpLn.Accept()
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	log1.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
-	// 	go d.startSession(conn)
-	// }
+func (d *Supervisor) doAccept() {
 	ch := network.Tcp.Serve(params.SupervisorEndpoint)
 	for {
 		clientRequest := <-ch
@@ -253,16 +240,16 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 	}
 
 	d.sl.Slog.Println("Before input .csv")
+
 	// write to .csv file
-	dirpath := path.Join(params.DataWritePath, "supervisor_measureOutput/")
-	err := os.MkdirAll(dirpath, os.ModePerm)
+	dirPath := path.Join(params.DataWritePath, "supervisor_measureOutput/")
+	err := os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {
 		log.Panic(err)
 	}
-	// var measureItems []webapi.MeasureItem = make([]webapi.MeasureItem, 0)
 
 	for _, measureMod := range d.testMeasureMods { // 遍历测试模组
-		targetPath := path.Join(dirpath, measureMod.OutputMetricName()+".csv")
+		targetPath := path.Join(dirPath, measureMod.OutputMetricName()+".csv")
 		f, err := os.Open(targetPath)
 		resultPerEpoch, totResult := measureMod.OutputRecord()
 
@@ -270,14 +257,12 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 		allResult = append(allResult, totResult)
 		allResult = append(allResult, resultPerEpoch...)
 
-		// 附加到包里。
-		// measureItems = append(measureItems, webapi.MeasureItem{Name: measureMod.OutputMetricName(), Desc: measure.PrintDescJson(measureMod.GetDesc()), Vals: allResult})
-
 		// 对于文件则控制精度
 		resultStr := make([]string, 0)
 		for _, result := range resultPerEpoch {
 			resultStr = append(resultStr, strconv.FormatFloat(result, 'f', 8, 64))
 		}
+
 		// 拼接
 		resultStr = append(resultStr, strconv.FormatFloat(totResult, 'f', 8, 64))
 		if err != nil && os.IsNotExist(err) { // 不存在则创建文件并写入
@@ -295,7 +280,6 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 			w.Flush()
 		} else { // 存在则直接写入文件
 			file, err := os.OpenFile(targetPath, os.O_APPEND|os.O_RDWR, 0666)
-
 			if err != nil {
 				log.Panic(err)
 			}
@@ -311,14 +295,12 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 		d.sl.Slog.Println(measureMod.OutputRecord())
 	}
 
-	// webapi.GlobalProxy.Enqueue(webapi.Completed(d.pbftItems, measureItems))
-
 	d.sl.Slog.Println("Now waiting for Other Node Bookings and result")
 
 	result := <-d.result
 	d.sl.Slog.Println("result generated")
 
-	webapi.GlobalProxy.Enqueue(webapi.Completed1(d.pbftItems, result))
+	webapi.GlobalProxy.Enqueue(webapi.Completed(d.pbftItems, result))
 
 	network.Tcp.Close()
 	d.tcpLn.Close()
