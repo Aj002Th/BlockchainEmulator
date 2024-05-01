@@ -8,27 +8,27 @@ import (
 )
 
 // to test cross-transaction rate
-type TestCrossTxRate_Relay struct {
+type TestCrossTxRate_Pbft struct {
 	epochID       int
 	totTxNum      []float64
 	totCrossTxNum []float64
-	relayTxRecord map[string]bool // record whether the relay1 has counted
+	pbftTxRecord  map[string]bool // record whether the pbft1 has counted
 }
 
-func NewTestCrossTxRate_Relay() *TestCrossTxRate_Relay {
-	return &TestCrossTxRate_Relay{
+func NewTestCrossTxRate_Pbft() *TestCrossTxRate_Pbft {
+	return &TestCrossTxRate_Pbft{
 		epochID:       -1,
 		totTxNum:      make([]float64, 0),
 		totCrossTxNum: make([]float64, 0),
-		relayTxRecord: make(map[string]bool),
+		pbftTxRecord:  make(map[string]bool),
 	}
 }
 
-func (tctr *TestCrossTxRate_Relay) OutputMetricName() string {
+func (tctr *TestCrossTxRate_Pbft) OutputMetricName() string {
 	return "CrossTransaction_ratio"
 }
 
-func (tctr *TestCrossTxRate_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
+func (tctr *TestCrossTxRate_Pbft) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	if b.BlockBodyLength == 0 { // empty block
 		return
 	}
@@ -40,16 +40,16 @@ func (tctr *TestCrossTxRate_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 		tctr.epochID++
 	}
 
-	// add relay1 txs
-	// modify the relay map
-	for _, r1tx := range b.Relay1Txs {
-		tctr.relayTxRecord[string(r1tx.Hash)] = true
+	// add pbft1 txs
+	// modify the pbft map
+	for _, r1tx := range b.Pbft1Txs {
+		tctr.pbftTxRecord[string(r1tx.Hash)] = true
 		tctr.totCrossTxNum[epochid] += 0.5
 		tctr.totTxNum[epochid] += 0.5
 	}
-	// add inner-shard transaction and relay2 transactions
+	// add inner-shard transaction and pbft2 transactions
 	for _, tx := range b.ExcutedTxs {
-		if _, ok := tctr.relayTxRecord[string(tx.Hash)]; !ok {
+		if _, ok := tctr.pbftTxRecord[string(tx.Hash)]; !ok {
 			// inner-shard transaction
 			tctr.totTxNum[epochid] += 1
 		} else {
@@ -59,7 +59,7 @@ func (tctr *TestCrossTxRate_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	}
 }
 
-func (tctr *TestCrossTxRate_Relay) OutputRecord() (perEpochCTXratio []float64, totCTXratio float64) {
+func (tctr *TestCrossTxRate_Pbft) OutputRecord() (perEpochCTXratio []float64, totCTXratio float64) {
 	perEpochCTXratio = make([]float64, 0)
 	allEpoch_totTxNum := 0.0
 	allEpoch_ctxNum := 0.0
@@ -74,7 +74,7 @@ func (tctr *TestCrossTxRate_Relay) OutputRecord() (perEpochCTXratio []float64, t
 	return perEpochCTXratio, allEpoch_ctxNum / allEpoch_totTxNum
 }
 
-func (tctr *TestCrossTxRate_Relay) GetDesc() metrics.Desc {
+func (tctr *TestCrossTxRate_Pbft) GetDesc() metrics.Desc {
 	b := metrics.NewDescBuilder("跨交易率(CrossTxRate)", "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒")
 
 	var perEpochCTXratio []float64

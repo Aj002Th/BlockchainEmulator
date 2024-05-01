@@ -10,6 +10,6 @@ type ChainConfig struct {
 	BlockInterval  uint64
 	InjectSpeed    uint64
 
-	// used in transaction relaying, useless in brokerchain mechanism
-	MaxRelayBlockSize uint64
+	// used in transaction pbfting, useless in brokerchain mechanism
+	MaxPbftBlockSize uint64
 }

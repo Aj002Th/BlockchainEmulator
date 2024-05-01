@@ -9,14 +9,14 @@ import (
 
 func GetByName(name string) MeasureModule {
 	switch name {
-	case "TPS_Relay":
-		return NewTestModule_avgTPS_Relay()
-	case "TCL_Relay":
-		return (NewTestModule_TCL_Relay())
-	case "CrossTxRate_Relay":
-		return (NewTestCrossTxRate_Relay())
-	case "TxNumberCount_Relay":
-		return (NewTestTxNumCount_Relay())
+	case "TPS_Pbft":
+		return NewTestModule_avgTPS_Pbft()
+	case "TCL_Pbft":
+		return (NewTestModule_TCL_Pbft())
+	case "CrossTxRate_Pbft":
+		return (NewTestCrossTxRate_Pbft())
+	case "TxNumberCount_Pbft":
+		return (NewTestTxNumCount_Pbft())
 	case "BlockNumCount":
 		return (NewBlockNumCount())
 	default:

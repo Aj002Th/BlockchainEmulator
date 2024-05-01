@@ -17,7 +17,7 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
-type RelayCommitteeModule struct {
+type PbftCommitteeModule struct {
 	csvPath      string
 	dataTotalNum int
 	nowDataNum   int
@@ -29,8 +29,8 @@ type RelayCommitteeModule struct {
 
 var log1 = supervisor_log.Log1
 
-func NewRelayCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *RelayCommitteeModule {
-	return &RelayCommitteeModule{
+func NewPbftCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *PbftCommitteeModule {
+	return &PbftCommitteeModule{
 		csvPath:      csvFilePath,
 		dataTotalNum: dataNum,
 		batchDataNum: batchNum,
@@ -56,7 +56,7 @@ func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 }
 
 // 把这一批交易发送给pbft主节点。
-func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
+func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 	// the txs will be sent
 	sendToShard := make(map[uint64][]*base.Transaction)
 
@@ -92,7 +92,7 @@ func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 // Sup开启的时候同步地调一次。
 // 把tx读出来然后用txSending发出去。
 // read transactions, the Number of the transactions is - batchDataNum
-func (rthm *RelayCommitteeModule) MsgSendingControl() {
+func (rthm *PbftCommitteeModule) MsgSendingControl() {
 	log1.Println("in MsgSendingControl")
 
 	txFile, err := os.Open(rthm.csvPath)
@@ -139,7 +139,7 @@ func (rthm *RelayCommitteeModule) MsgSendingControl() {
 // HandleBlockInfo
 // Sup会在HandleBlockInfos里调
 // no operation here
-func (rthm *RelayCommitteeModule) HandleBlockInfo(b *pbft.BlockInfoMsg) {
+func (rthm *PbftCommitteeModule) HandleBlockInfo(b *pbft.BlockInfoMsg) {
 	// log1.Println("module HandleBlockInfo")
 	// NOTHING TO DO
 }

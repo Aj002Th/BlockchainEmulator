@@ -22,6 +22,7 @@ type TcpCustomProtocolNetwork struct {
 	logger         log.Logger
 	tcpLock        sync.Mutex
 	recvChan       chan []byte
+	doneChan       chan struct{}
 }
 
 func NewTcpCustomProtocolNetwork() *TcpCustomProtocolNetwork {
@@ -31,6 +32,7 @@ func NewTcpCustomProtocolNetwork() *TcpCustomProtocolNetwork {
 		OnDownload:     signal.NewAsyncSignalImpl[int]("TcpOnDownload"),
 		logger:         *log.Default(),
 		recvChan:       make(chan []byte),
+		doneChan:       make(chan struct{}),
 	}
 }
 
@@ -89,22 +91,30 @@ func (t *TcpCustomProtocolNetwork) Broadcast(sender string, receivers []string, 
 }
 
 // Serve 传入endpoint应当满足 IPv4地址:端口号
-func (d *TcpCustomProtocolNetwork) Serve(endpoint string) chan []byte { // 不停听并且起goroutine
+func (t *TcpCustomProtocolNetwork) Serve(endpoint string) chan []byte { // 不停听并且起goroutine
 	go func() {
 		tcpLn, err := net.Listen("tcp", endpoint)
 		if err != nil {
 			log.Panic(err)
 		}
+
+		go func() {
+			<-t.doneChan
+			tcpLn.Close() // SO说，如何让net.Listener.Accept()优雅Cancellationn呢？可以直接Ln.Close()，诱导它返回错误。这样就能顺利解决问题。
+		}()
+
 		for {
 			conn, err := tcpLn.Accept()
 			if err != nil {
-				close(d.recvChan)
+				close(t.recvChan)
+				t.logger.Println("recvChan close")
+				return
 			}
-			d.logger.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
-			go d.startSession(conn)
+			t.logger.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
+			go t.startSession(conn)
 		}
 	}()
-	return d.recvChan
+	return t.recvChan
 }
 
 func (d *TcpCustomProtocolNetwork) startSession(con net.Conn) {
@@ -136,7 +146,10 @@ func (t *TcpCustomProtocolNetwork) Close() {
 	for _, conn := range t.connectionPool {
 		_ = conn.Close()
 	}
+
 	t.connectionPool = make(map[string]net.Conn) // 重置连接池
+
+	t.doneChan <- struct{}{}
 }
 
 // 读取完整消息并打印到日志
@@ -149,8 +162,11 @@ func (t *TcpCustomProtocolNetwork) readFromConn(addr string) {
 	for {
 		n, err := conn.Read(buffer)
 		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				break
+			}
 			if err != io.EOF {
-				log.Println("Read error for address", addr, ":", err)
+				log.Println("Unexpected conn.Read error for address", addr, ":", err, ". Now break the reading loop")
 			}
 			break
 		}
@@ -177,6 +193,14 @@ func (t *TcpCustomProtocolNetwork) readFromConn(addr string) {
 	}
 }
 
+func (t *TcpCustomProtocolNetwork) GetOnUpload() signal.Signal[int] {
+	return t.OnUpload
+}
+
+func (t *TcpCustomProtocolNetwork) GetOnDownload() signal.Signal[int] {
+	return t.OnDownload
+}
+
 func (t *TcpCustomProtocolNetwork) UpdateMetric(up int, down int) { // 单位是字节数
 	t.OnUpload.Emit(up)
 	t.OnDownload.Emit(down)
@@ -196,5 +220,3 @@ func readMessage(buffer *bytes.Buffer) (string, error) {
 // 	t := NewTcpCustomProtocolNetwork()
 // 	return t.Send
 // }()
-
-var Tcp = NewTcpCustomProtocolNetwork()

@@ -3,11 +3,8 @@
 package pbft
 
 import (
-	"bufio"
 	"encoding/json"
-	"io"
 	"log"
-	"net"
 	"sync"
 	"time"
 
@@ -63,7 +60,7 @@ type PbftConsensusNode struct {
 	// logger
 	pl *misc.PbftLog
 	// tcp control
-	tcpln       net.Listener
+	// tcpln       net.Listener
 	tcpPoolLock sync.Mutex
 
 	// to handle the message in the pbft
@@ -113,10 +110,10 @@ func NewPbftNode(nodeID uint64, pcc *chain.Config) *PbftConsensusNode {
 	base.NodeLog = self.pl
 
 	// choose how to handle the messages in pbft or beyond pbft
-	self.ihm = &RawRelayPbftExtraHandleMod{
+	self.ihm = &RawPbftPbftExtraHandleMod{
 		node: self,
 	}
-	self.ohm = &RawRelayOutsideModule{
+	self.ohm = &RawPbftOutsideModule{
 		node: self,
 	}
 
@@ -158,32 +155,32 @@ func (self *PbftConsensusNode) dispatchMessage(msg []byte) {
 	}
 }
 
-func (self *PbftConsensusNode) startSession(con net.Conn) {
-	defer con.Close()
-	clientReader := bufio.NewReader(con)
-	for {
-		clientRequest, err := clientReader.ReadBytes('\n') // 读到反斜杠n。
-		network.Tcp.UpdateMetric(0, len(clientRequest))
-		self.stopLock.Lock()
-		stopVal := self.stop
-		self.stopLock.Unlock()
-		if stopVal {
-			return
-		}
-		switch err { // 没错误那就带锁地handleMessage
-		case nil:
-			self.tcpPoolLock.Lock()
-			self.dispatchMessage(clientRequest)
-			self.tcpPoolLock.Unlock()
-		case io.EOF:
-			log.Println("client closed the connection by terminating the process")
-			return
-		default:
-			log.Printf("error: %v\n", err)
-			return
-		}
-	}
-}
+// func (self *PbftConsensusNode) startSession(con net.Conn) {
+// 	defer con.Close()
+// 	clientReader := bufio.NewReader(con)
+// 	for {
+// 		clientRequest, err := clientReader.ReadBytes('\n') // 读到反斜杠n。
+// 		network.Tcp.UpdateMetric(0, len(clientRequest))
+// 		self.stopLock.Lock()
+// 		stopVal := self.stop
+// 		self.stopLock.Unlock()
+// 		if stopVal {
+// 			return
+// 		}
+// 		switch err { // 没错误那就带锁地handleMessage
+// 		case nil:
+// 			self.tcpPoolLock.Lock()
+// 			self.dispatchMessage(clientRequest)
+// 			self.tcpPoolLock.Unlock()
+// 		case io.EOF:
+// 			log.Println("client closed the connection by terminating the process")
+// 			return
+// 		default:
+// 			log.Printf("error: %v\n", err)
+// 			return
+// 		}
+// 	}
+// }
 
 func (self *PbftConsensusNode) Run() {
 	meter.NodeSideStart()
@@ -226,7 +223,11 @@ func (self *PbftConsensusNode) doAccept() {
 	// }
 	ch := network.Tcp.Serve(self.RunningNode.IPaddr)
 	for {
-		clientRequest := <-ch
+		clientRequest, ok := <-ch
+		if !ok {
+			self.pl.Println("Pbft Node, the Tcp channel is closed")
+			return
+		}
 		self.dispatchMessage(clientRequest)
 	}
 }
@@ -246,7 +247,7 @@ func (self *PbftConsensusNode) setStopAndCleanUp() {
 	GatherAndSend(int(self.NodeID), self.pl)
 
 	network.Tcp.Close()
-	self.tcpln.Close()
+	// self.tcpln.Close()
 	self.CurChain.CloseBlockChain()
 	self.pl.Println("handled stop message")
 }

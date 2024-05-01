@@ -5,15 +5,15 @@ import (
 	"log"
 )
 
-// RawRelayOutsideModule
-// This module used in the blockChain using transaction relaying mechanism.
+// RawPbftOutsideModule
+// This module used in the blockChain using transaction pbfting mechanism.
 // "Raw" means that the pbft only make block consensus.
-type RawRelayOutsideModule struct {
+type RawPbftOutsideModule struct {
 	node *PbftConsensusNode
 }
 
 // HandleMessageOutsidePBFT msgType canbe defined in message
-func (self *RawRelayOutsideModule) HandleMessageOutsidePBFT(msgType MessageType, content []byte) bool {
+func (self *RawPbftOutsideModule) HandleMessageOutsidePBFT(msgType MessageType, content []byte) bool {
 	switch msgType {
 	case CInject:
 		self.handleInjectTx(content)
@@ -22,7 +22,7 @@ func (self *RawRelayOutsideModule) HandleMessageOutsidePBFT(msgType MessageType,
 	return true
 }
 
-func (self *RawRelayOutsideModule) handleInjectTx(content []byte) {
+func (self *RawPbftOutsideModule) handleInjectTx(content []byte) {
 	it := new(InjectTxs)
 	err := json.Unmarshal(content, it)
 	if err != nil {

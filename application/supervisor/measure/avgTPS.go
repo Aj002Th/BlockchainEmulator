@@ -9,30 +9,30 @@ import (
 )
 
 // to test average TPS in this system
-type TestModule_avgTPS_Relay struct {
+type TestModule_avgTPS_Pbft struct {
 	epochID      int
 	excutedTxNum []float64       // record how many excuted txs in a epoch, maybe the cross shard tx will be calculated as a 0.5 tx
-	relayTx      map[string]bool // record whether a relayTx or not
+	pbftTx       map[string]bool // record whether a pbftTx or not
 	startTime    []time.Time     // record when the epoch starts
 	endTime      []time.Time     // record when the epoch ends
 }
 
-func NewTestModule_avgTPS_Relay() *TestModule_avgTPS_Relay {
-	return &TestModule_avgTPS_Relay{
+func NewTestModule_avgTPS_Pbft() *TestModule_avgTPS_Pbft {
+	return &TestModule_avgTPS_Pbft{
 		epochID:      -1,
 		excutedTxNum: make([]float64, 0),
 		startTime:    make([]time.Time, 0),
 		endTime:      make([]time.Time, 0),
-		relayTx:      make(map[string]bool),
+		pbftTx:       make(map[string]bool),
 	}
 }
 
-func (tat *TestModule_avgTPS_Relay) OutputMetricName() string {
+func (tat *TestModule_avgTPS_Pbft) OutputMetricName() string {
 	return "Average_TPS"
 }
 
 // add the number of excuted txs, and change the time records
-func (tat *TestModule_avgTPS_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
+func (tat *TestModule_avgTPS_Pbft) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	if b.BlockBodyLength == 0 { // empty block
 		return
 	}
@@ -49,12 +49,12 @@ func (tat *TestModule_avgTPS_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 		tat.epochID++
 	}
 	// modify the local epoch
-	for _, tx := range b.Relay1Txs {
-		tat.relayTx[string(tx.Hash)] = true
+	for _, tx := range b.Pbft1Txs {
+		tat.pbftTx[string(tx.Hash)] = true
 	}
-	tat.excutedTxNum[epochid] += float64(b.Relay1TxNum) / 2
+	tat.excutedTxNum[epochid] += float64(b.Pbft1TxNum) / 2
 	for _, tx := range b.ExcutedTxs {
-		if _, ok := tat.relayTx[string(tx.Hash)]; ok {
+		if _, ok := tat.pbftTx[string(tx.Hash)]; ok {
 			tat.excutedTxNum[epochid] += 0.5
 		} else {
 			tat.excutedTxNum[epochid] += 1
@@ -69,7 +69,7 @@ func (tat *TestModule_avgTPS_Relay) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 }
 
 // output the average TPS
-func (tat *TestModule_avgTPS_Relay) OutputRecord() (perEpochTPS []float64, totalTPS float64) {
+func (tat *TestModule_avgTPS_Pbft) OutputRecord() (perEpochTPS []float64, totalTPS float64) {
 	perEpochTPS = make([]float64, tat.epochID+1)
 	totalTxNum := 0.0
 	eTime := time.Now()
@@ -93,7 +93,7 @@ func fmtTxPerSec(v float64) string {
 	return fmt.Sprintf("%.2f txs/s", v)
 }
 
-func (tat *TestModule_avgTPS_Relay) GetDesc() metrics.Desc {
+func (tat *TestModule_avgTPS_Pbft) GetDesc() metrics.Desc {
 
 	b := metrics.NewDescBuilder("交易共识频率(AverageTPS)", "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒")
 
