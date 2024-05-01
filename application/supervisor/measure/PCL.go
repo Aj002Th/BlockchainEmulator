@@ -65,7 +65,7 @@ func (tml *PCL) OutputRecord() (perEpochLatency []float64, totLatency float64) {
 }
 
 func (tml *PCL) GetDesc() metrics.Desc {
-	b := metrics.NewDescBuilder("PCL", "Propose->Commit的")
+	b := metrics.NewDescBuilder("Prepare-Commit时延(PCL)", "交易从Propose阶段到Commit阶段的耗时统计")
 
 	var perEpochLatency []float64
 	var totLatency float64
@@ -73,13 +73,13 @@ func (tml *PCL) GetDesc() metrics.Desc {
 	latencySum := 0.0
 	totTxNum := 0.0
 	for eid, totLatency := range tml.totTxLatencyEpoch {
-		b.AddElem(fmt.Sprintf("Epoch %v时的值", eid), "", totLatency/tml.txNum[eid])
+		b.AddElem(fmt.Sprintf("第%v批次 Prepare-Commit时延", eid+1), "", totLatency/tml.txNum[eid])
 		perEpochLatency = append(perEpochLatency, totLatency/tml.txNum[eid])
 		latencySum += totLatency
 		totTxNum += tml.txNum[eid]
 	}
 	totLatency = latencySum / totTxNum
 
-	b.AddElem("TotalLatency", "", totLatency)
+	b.AddElem("总计Prepare-Commit时延", "整个运行过程中交易从Propose阶段到Commit阶段的耗时统计", totLatency)
 	return b.GetDesc()
 }
