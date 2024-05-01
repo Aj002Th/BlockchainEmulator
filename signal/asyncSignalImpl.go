@@ -19,16 +19,16 @@ var log1 *log.Logger = supervisor_log.Log1
 
 type ChanCancel = chan int
 
-type Val[DATA any] struct { // TODO: 加一个调试信息，比如函数名字之类，方便调试。
+type Val[DATA any] struct { // TODO: 加一个调试信息，比如函数名字之类，方便调试
 	cd       chan DATA
 	cc       ChanCancel
 	canceled *atomic.Bool
 }
 
 func NewVal[DATA any]() Val[DATA] {
-	var cd chan DATA = make(chan DATA)
-	var cc ChanCancel = make(ChanCancel)
 	var canceled atomic.Bool
+	cd := make(chan DATA)
+	cc := make(ChanCancel)
 	return Val[DATA]{cd: cd, cc: cc, canceled: &canceled}
 }
 
@@ -47,7 +47,7 @@ func NewAsyncSignalImpl[DATA any](name string) AsyncSignalImpl[DATA] {
 		outChannels: make(map[string]Val[DATA]),
 		lastEmit:    promise.New(func(resolve func(int), reject func(error)) { resolve(0) }),
 	}
-	RegisterSig(s) // 把它注册到全局的表里。方便稍后用名字查到。
+	RegisterSig[DATA](s) // 把它注册到全局的表里。方便稍后用名字查到。
 	return s
 }
 
@@ -55,7 +55,7 @@ func (self AsyncSignalImpl[DATA]) GetName() string {
 	return self.name
 }
 
-// cb在一个goroutine上依次调用，没有数据竞争。所以cb不要写阻塞代码。
+// Connect cb在一个goroutine上依次调用，没有数据竞争。所以cb不要写阻塞代码。
 func (self AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时候只准传函数和lambda，不准传方法。
 	fmt.Printf("Connect &cb: %v\n", &cb)
 	fmt.Printf("Connect cb: %v\n", cb)
@@ -77,7 +77,7 @@ func (self AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时�
 	return true
 }
 
-// 返回值：操作是否成功
+// Disconnect 返回值：操作是否成功
 func (self AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
 	log1.Printf("Signal %v, now setting cancel\n", self.name)
 	fmt.Printf("self.outChannels: %v\n", self.outChannels)
@@ -88,7 +88,7 @@ func (self AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
 	return true
 }
 
-// 不会阻塞，用Promise Then串起来了。但能够保持data调用的顺序。
+// Emit 不会阻塞, 用Promise Then串起来了, 同时能够保持data调用的顺序。
 func (self AsyncSignalImpl[DATA]) Emit(data DATA) {
 	for _, val := range self.outChannels {
 		log1.Printf("Signal %v, sending to channel %v\n", self.name, val.cd)
