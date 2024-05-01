@@ -188,21 +188,27 @@ type Re1 struct {
 	MeasureOutputs []metrics.Desc `json:"measureOutputs"`
 }
 
-// 示例代码。不应该放在这里。
-func rrTestCase() {
-	RunApiServer()
-	log.Fatal(http.ListenAndServe("0.0.0.0:7697", nil))
-}
+// 通信消息
 
 var Hello = Msg{Type: "hello"}
+
 var Started = Msg{Type: "started"}
+
 var Computing = func(Total int, Count int) Msg {
-	return Msg{Type: "computing", Content: Progress{Total: Total, Count: Count}}
+	return Msg{
+		Type: "computing",
+		Content: Progress{
+			Total: Total,
+			Count: Count,
+		},
+	}
 }
-var Completed = func(PbftShardCsv []PbftItem, MeasureOutputs []MeasureItem) Msg {
-	return Msg{Type: "completed", Content: Re{PbftShardCsv: PbftShardCsv, MeasureOutputs: MeasureOutputs}}
+
+var Completed = func(PbftShardCsv []PbftItem, desc []metrics.Desc) Msg {
+	return Msg{
+		Type:    "completed",
+		Content: Re1{PbftShardCsv: PbftShardCsv, MeasureOutputs: desc},
+	}
 }
-var Completed1 = func(PbftShardCsv []PbftItem, desc []metrics.Desc) Msg {
-	return Msg{Type: "completed", Content: Re1{PbftShardCsv: PbftShardCsv, MeasureOutputs: desc}}
-}
+
 var Bye = Msg{Type: "bye"}
