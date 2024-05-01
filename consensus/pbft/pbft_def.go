@@ -188,8 +188,22 @@ func (self *PbftConsensusNode) startSession(con net.Conn) {
 func (self *PbftConsensusNode) Run() {
 	meter.NodeSideStart()
 	if self.NodeID == 0 {
+		// 主节点需要负责从 txPool 中取出 tx 来处理
 		println("well my node_id is 0 so i will do propose")
 		go self.doPropose()
+
+		// 主节点需要向 supervisor 持续报告 keepAlive
+		go func() {
+			for {
+				b := KeepAliveMsg{Msg: "alive"}
+				m, err := json.Marshal(b)
+				if err != nil {
+					panic(err)
+				}
+				MergeAndSend(CBooking, m, params.SupervisorEndpoint, self.pl)
+				time.Sleep(time.Second * 5)
+			}
+		}()
 	}
 	self.doAccept()
 }
@@ -233,8 +247,15 @@ func (self *PbftConsensusNode) setStopAndCleanUp() {
 }
 
 func GatherAndSend(nodeID int, pl *log.Logger) {
-	// Procs相关
-	b := Booking{AvgCpuTime: meter.AvgCpuTime, DiskMetric: meter.DiskMetric, TotalUpload: meter.TotalUpload, TotalDownload: meter.TotalDownload, TotalTime: uint64(time.Since(meter.Time_Begin)), NodeId: nodeID}
+	// Process相关
+	b := BookingMsg{
+		AvgCpuTime:    meter.AvgCpuTime,
+		DiskMetric:    meter.DiskMetric,
+		TotalUpload:   meter.TotalUpload,
+		TotalDownload: meter.TotalDownload,
+		TotalTime:     uint64(time.Since(meter.Time_Begin)),
+		NodeId:        nodeID,
+	}
 	m, err := json.Marshal(b)
 	if err != nil {
 		panic(err)

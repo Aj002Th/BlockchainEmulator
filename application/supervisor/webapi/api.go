@@ -85,25 +85,26 @@ func writeToCMsg(c *websocket.Conn, m Msg) error {
 
 // 不是private，是包内共享方法。给echo用的
 func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // without dequeue any elems
-	var others chan Msg = make(chan Msg)
+	others := make(chan Msg)
 
 	ap.mtx.RLock() // 读锁成对。在入队前注册监听器确保不错过事件。
-	var append_cb func(m Msg)
-	append_cb = func(m Msg) { // 那个asyncImpl能保证顺序
+	var appendCB func(m Msg)
+	appendCB = func(m Msg) { // 那个asyncImpl能保证顺序
 		others <- m
 		if m.Type == "bye" {
 			close(others)
 			log.Print("Bye Sent")
-			ap.Append_Signal.Disconnect(append_cb)
+			ap.Append_Signal.Disconnect(appendCB)
 		}
 	}
-	ap.Append_Signal.Connect(append_cb)
+	ap.Append_Signal.Connect(appendCB)
+
 	// 把之前的历史消息发一遍。
-	var q_copy []Msg = make([]Msg, 0)
-	q_copy = append(q_copy, ap.queue...)
+	qCopy := make([]Msg, 0)
+	qCopy = append(qCopy, ap.queue...)
 	ap.mtx.RUnlock()
 
-	for _, m := range q_copy {
+	for _, m := range qCopy {
 		// writeToCMsg(c*websocket.Conn,c)
 		err := writeToCMsg(c, m)
 		if err != nil {
@@ -111,6 +112,7 @@ func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // witho
 			return errors.New("writeToConn Chase Failed")
 		}
 	}
+
 	// 现在发送新到达的
 	for {
 		m, isOpen := <-others
@@ -126,7 +128,7 @@ func (ap *GoodApiProxy) writeToConnNoConsume(c *websocket.Conn) error { // witho
 	return nil
 }
 
-var G_Proxy ApiProxy
+var GlobalProxy ApiProxy
 
 type DumbProxy struct {
 }
@@ -154,7 +156,7 @@ func echo(w http.ResponseWriter, r *http.Request) { // golang http server是多�
 	}
 	// defer c.Close()
 	// 事件循环。现在c变成了buffered的双向队列。
-	G_Proxy.writeToConnNoConsume(c)
+	GlobalProxy.writeToConnNoConsume(c)
 }
 
 // 构建一个富有状态的echo函数和相应状态chan。并且返回chan供写入。
