@@ -30,8 +30,8 @@ import (
 )
 
 type Supervisor struct {
-	IpNodeTable       map[uint64]map[uint64]string  // basic infos
-	tcpLn             net.Listener                  // tcp control
+	IpNodeTable map[uint64]map[uint64]string // basic infos
+	// tcpLn             net.Listener                  // tcp control
 	tcpLock           sync.Mutex                    // listenStop bool
 	sl                *supervisor_log.SupervisorLog // logger module
 	Ss                *signal.StopSignal            // control components// to control the stop message sending
@@ -225,7 +225,11 @@ func (d *Supervisor) startSession(con net.Conn) {
 func (d *Supervisor) doAccept() {
 	ch := network.Tcp.Serve(params.SupervisorEndpoint)
 	for {
-		clientRequest := <-ch
+		clientRequest, ok := <-ch
+		if !ok {
+			d.sl.Slog.Println("Sup, the Tcp channel is closed")
+			return
+		}
 		log.Printf("Receiving %v", clientRequest)
 		d.dispatchMessage(clientRequest)
 	}
@@ -303,6 +307,6 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 	webapi.GlobalProxy.Enqueue(webapi.Completed(d.pbftItems, result))
 
 	network.Tcp.Close()
-	d.tcpLn.Close()
+	// d.tcpLn.Close()
 	webapi.GlobalProxy.Enqueue(webapi.Bye)
 }

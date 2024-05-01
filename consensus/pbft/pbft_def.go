@@ -5,7 +5,6 @@ package pbft
 import (
 	"encoding/json"
 	"log"
-	"net"
 	"sync"
 	"time"
 
@@ -61,7 +60,7 @@ type PbftConsensusNode struct {
 	// logger
 	pl *misc.PbftLog
 	// tcp control
-	tcpln       net.Listener
+	// tcpln       net.Listener
 	tcpPoolLock sync.Mutex
 
 	// to handle the message in the pbft
@@ -224,7 +223,11 @@ func (self *PbftConsensusNode) doAccept() {
 	// }
 	ch := network.Tcp.Serve(self.RunningNode.IPaddr)
 	for {
-		clientRequest := <-ch
+		clientRequest, ok := <-ch
+		if !ok {
+			self.pl.Println("Pbft Node, the Tcp channel is closed")
+			return
+		}
 		self.dispatchMessage(clientRequest)
 	}
 }
@@ -244,7 +247,7 @@ func (self *PbftConsensusNode) setStopAndCleanUp() {
 	GatherAndSend(int(self.NodeID), self.pl)
 
 	network.Tcp.Close()
-	self.tcpln.Close()
+	// self.tcpln.Close()
 	self.CurChain.CloseBlockChain()
 	self.pl.Println("handled stop message")
 }
