@@ -41,8 +41,8 @@ func NewRelayCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *sign
 	}
 }
 
-// transfrom, data to transaction
-// check whether it is a legal txs meesage. if so, read txs and put it into the txlist
+// transform, data to transaction
+// check whether it is a legal txs message. if so, read txs and put it into the txList
 func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 	if data[6] == "0" && data[7] == "0" && len(data[3]) > 16 && len(data[4]) > 16 && data[3] != data[4] {
 		val, ok := new(big.Int).SetString(data[8], 10)
@@ -60,8 +60,11 @@ func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 	// the txs will be sent
 	sendToShard := make(map[uint64][]*base.Transaction)
 
-	for idx := 0; idx <= len(txlist); idx++ { // 把每个tx按顺序推进去。
-		if idx > 0 && (idx%params.InjectSpeed == 0 || idx == len(txlist)) { // 到达InjectSpeed的时候就发一个InjectTxs给Node 0。并且清空队列列表。
+	// 把每个tx按顺序推进去
+	for idx := 0; idx <= len(txlist); idx++ {
+		// 到达InjectSpeed的时候就发一个InjectTxs给Node 0
+		// 同时清空队列列表。
+		if idx > 0 && (idx%params.InjectSpeed == 0 || idx == len(txlist)) {
 			// send to shard
 			it := pbft.InjectTxs{
 				Txs:       sendToShard[0],
@@ -92,16 +95,15 @@ func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 func (rthm *RelayCommitteeModule) MsgSendingControl() {
 	log1.Println("in MsgSendingControl")
 
-	txfile, err := os.Open(rthm.csvPath)
+	txFile, err := os.Open(rthm.csvPath)
 	if err != nil {
 		log.Panic(err)
 	}
-	defer txfile.Close()
-	reader := csv.NewReader(txfile)
-	txlist := make([]*base.Transaction, 0) // save the txs in this epoch (round)
+	defer txFile.Close()
+	reader := csv.NewReader(txFile)
+	txList := make([]*base.Transaction, 0) // save the txs in this epoch (round)
 
-	// 从csv里每batchNum行转换成tx的列表，并且同步地发送出去。
-
+	// 将csv里每batchNum行转换成tx的列表，并且同步地发送出去。
 	for {
 		data, err := reader.Read()
 		if err == io.EOF {
@@ -110,16 +112,21 @@ func (rthm *RelayCommitteeModule) MsgSendingControl() {
 		if err != nil {
 			log.Panic(err)
 		}
-		if tx, ok := data2tx(data, uint64(rthm.nowDataNum)); ok { // 从csv row到base.Transaction。并且附加到txlist。并且计数。
-			txlist = append(txlist, tx)
+
+		// 从csv row 转换到 base.Transaction
+		if tx, ok := data2tx(data, uint64(rthm.nowDataNum)); ok {
+			// 附加到txList
+			txList = append(txList, tx)
+			// 计数
 			rthm.nowDataNum++
 		}
 
 		// re-shard condition, enough edges
-		if len(txlist) == int(rthm.batchDataNum) || rthm.nowDataNum == rthm.dataTotalNum { // 当txlist的长度满足batchDataNum，或者到达顶峰，那就要发送。
-			rthm.txSending(txlist)
+		if len(txList) == rthm.batchDataNum || rthm.nowDataNum == rthm.dataTotalNum {
+			// 当 txList 的长度满足batchDataNum，或者到达顶峰，那就要发送。
+			rthm.txSending(txList)
 			// reset the variants about tx sending
-			txlist = make([]*base.Transaction, 0) // 之后txlist又恢复，从头再来。
+			txList = make([]*base.Transaction, 0) // 之后txList又恢复，从头再来。
 			rthm.Ss.StopGap_Reset()               // StopGap也要Reset。
 		}
 

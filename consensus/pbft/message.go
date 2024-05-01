@@ -25,8 +25,9 @@ const (
 
 	CBlockInfo MessageType = "BlockInfo"
 	CSeqIDinfo MessageType = "SequenceID"
+	CBooking   MessageType = "Booking"
 
-	CBooking MessageType = "Booking"
+	CNodeReady MessageType = "NodeReady"
 )
 
 var (
