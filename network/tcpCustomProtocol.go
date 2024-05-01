@@ -131,9 +131,7 @@ func (t *TcpCustomProtocolNetwork) readFromConn(addr string) {
 	}
 }
 
-type TT = TcpCustomProtocolNetwork
-
-func (t *TT) UpdateMetric(up int, down int) { // 单位是字节数
+func (t *TcpCustomProtocolNetwork) UpdateMetric(up int, down int) { // 单位是字节数
 	t.OnUpload.Emit(up)
 	t.OnDownload.Emit(down)
 }
