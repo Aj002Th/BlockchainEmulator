@@ -57,8 +57,8 @@ func GetResult(ws *[]Booking) []metrics.Desc { // 每一个度量，作为一棵
 		tx.AddElem(fmt.Sprintf("节点%v CPU时间", nn), "", c)
 		bc.AddElem(fmt.Sprintf("节点%v 内存测量", nn), "", b)
 		dur.AddElem(fmt.Sprintf("节点%v 时间", nn), "", t)
-		net.AddElem(fmt.Sprintf("节点%v 上传", nn), "", w.TotalUpload)
-		net.AddElem(fmt.Sprintf("节点%v 下载", nn), "", w.TotalDownload)
+		net.AddElem(fmt.Sprintf("节点%v 上传流量(bytes)", nn), "", w.TotalUpload)
+		net.AddElem(fmt.Sprintf("节点%v 下载流量(bytes)", nn), "", w.TotalDownload)
 		sumC += c
 		sumBc += b
 		sumDur += t
@@ -68,8 +68,8 @@ func GetResult(ws *[]Booking) []metrics.Desc { // 每一个度量，作为一棵
 	tx.AddElem("平均计数", "", sumC/float64(params.NodeNum))
 	bc.AddElem("平均计数", "", sumBc/uint64(params.NodeNum))
 	dur.AddElem("平均运行时间", "", sumDur/uint64(params.NodeNum))
-	net.AddElem("平均上传流量", "", sumUp/params.NodeNum)
-	net.AddElem("平均下载流量", "", sumDown/params.NodeNum)
+	net.AddElem("总计上传流量", "", sumUp/params.NodeNum)
+	net.AddElem("总计下载流量", "", sumDown/params.NodeNum)
 	ds = append(ds, tx.GetDesc())
 	ds = append(ds, bc.GetDesc())
 	ds = append(ds, dur.GetDesc())

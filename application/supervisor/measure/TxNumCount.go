@@ -49,17 +49,17 @@ func (ttnc *TestTxNumCount_Relay) OutputRecord() (perEpochCTXs []float64, totTxN
 }
 
 func (ttnc *TestTxNumCount_Relay) GetDesc() metrics.Desc {
-	b := metrics.NewDescBuilder("TxCount", "")
+	b := metrics.NewDescBuilder("交易数量统计", "对各个节点交易数量和总交易数量的统计")
 
 	var perEpochCTXs []float64
 	var totTxNum float64
 	perEpochCTXs = make([]float64, 0)
 	totTxNum = 0.0
 	for i, tn := range ttnc.txNum {
-		b.AddElem(fmt.Sprintf("Epoch %v", i+1), "", tn)
+		b.AddElem(fmt.Sprintf("第%v批次 交易计数（个）", i+1), fmt.Sprintf("第%v批次交易的数量", i+1), tn)
 		perEpochCTXs = append(perEpochCTXs, tn)
 		totTxNum += tn
 	}
-	b.AddElem("Total Tx Num", "", totTxNum)
+	b.AddElem("总交易计数（个）", "总的交易数量统计", totTxNum)
 	return b.GetDesc()
 }
