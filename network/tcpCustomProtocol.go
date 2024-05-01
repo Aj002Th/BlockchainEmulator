@@ -1,6 +1,7 @@
 package network
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"io"
@@ -18,6 +19,9 @@ type TcpCustomProtocolNetwork struct {
 	connectionPool map[string]net.Conn
 	OnUpload       signal.Signal[int]
 	OnDownload     signal.Signal[int]
+	logger         log.Logger
+	tcpLock        sync.Mutex
+	recvChan       chan []byte
 }
 
 func NewTcpCustomProtocolNetwork() *TcpCustomProtocolNetwork {
@@ -25,6 +29,7 @@ func NewTcpCustomProtocolNetwork() *TcpCustomProtocolNetwork {
 		connectionPool: make(map[string]net.Conn),
 		OnUpload:       signal.NewAsyncSignalImpl[int]("TcpOnUpload"),
 		OnDownload:     signal.NewAsyncSignalImpl[int]("TcpOnDownload"),
+		logger:         *log.Default(),
 	}
 }
 
@@ -79,6 +84,45 @@ func (t *TcpCustomProtocolNetwork) Broadcast(sender string, receivers []string, 
 			continue
 		}
 		go t.Send(msg, ip)
+	}
+}
+
+// Serve 传入endpoint应当满足 IPv4地址:端口号
+func (d *TcpCustomProtocolNetwork) Serve(endpoint string) chan []byte { // 不停听并且起goroutine
+	go func() {
+		tcpLn, err := net.Listen("tcp", endpoint)
+		if err != nil {
+			log.Panic(err)
+		}
+		for {
+			conn, err := tcpLn.Accept()
+			if err != nil {
+				close(d.recvChan)
+			}
+			d.logger.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
+			go d.startSession(conn)
+		}
+	}()
+	return d.recvChan
+}
+
+func (d *TcpCustomProtocolNetwork) startSession(con net.Conn) {
+	defer con.Close()
+	clientReader := bufio.NewReader(con)
+	for {
+		clientRequest, err := clientReader.ReadBytes('\n')
+		switch err {
+		case nil:
+			d.tcpLock.Lock()
+			d.recvChan <- clientRequest
+			d.tcpLock.Unlock()
+		case io.EOF:
+			log.Println("client closed the connection by terminating the process")
+			return
+		default:
+			log.Printf("error: %v\n", err)
+			return
+		}
 	}
 }
 
