@@ -74,7 +74,7 @@ func (tml *TestModule_TCL_Relay) GetDesc() metrics.Desc {
 	latencySum := 0.0
 	totTxNum := 0.0
 	for eid, totLatency := range tml.totTxLatencyEpoch {
-		b.AddElem(fmt.Sprintf("第%v批次 交易提交延迟", eid), "各批次交易从到达到提交的延迟，即Tx Confirm Latency", totLatency/tml.txNum[eid])
+		b.AddElem(fmt.Sprintf("第%v批次 交易提交延迟", eid+1), "各批次交易从到达到提交的延迟，即Tx Confirm Latency", totLatency/tml.txNum[eid])
 		perEpochLatency = append(perEpochLatency, totLatency/tml.txNum[eid])
 		latencySum += totLatency
 		totTxNum += tml.txNum[eid]
