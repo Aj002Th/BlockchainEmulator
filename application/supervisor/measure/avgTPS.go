@@ -1,8 +1,10 @@
 package measure
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 )
 
@@ -87,6 +89,30 @@ func (tat *TestModule_avgTPS_Relay) OutputRecord() (perEpochTPS []float64, total
 	return
 }
 
-func (tat *TestModule_avgTPS_Relay) GetDesc() string {
-	return "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒"
+func (tat *TestModule_avgTPS_Relay) GetDesc() metrics.Desc {
+
+	b := metrics.NewDescBuilder("TPS avg", "平均每秒产生的交易，衡量交易的次数。单位为 交易/秒")
+
+	var perEpochTPS []float64
+	var totalTPS float64
+	perEpochTPS = make([]float64, tat.epochID+1)
+	totalTxNum := 0.0
+	eTime := time.Now()
+	lTime := time.Time{}
+	for eid, exTxNum := range tat.excutedTxNum {
+		timeGap := tat.endTime[eid].Sub(tat.startTime[eid]).Seconds()
+		b.AddElem(fmt.Sprintf("Epoch %v", eid), "", exTxNum/timeGap)
+		perEpochTPS[eid] = exTxNum / timeGap
+		totalTxNum += exTxNum
+		if eTime.After(tat.startTime[eid]) {
+			eTime = tat.startTime[eid]
+		}
+		if tat.endTime[eid].After(lTime) {
+			lTime = tat.endTime[eid]
+		}
+	}
+	totalTPS = totalTxNum / (lTime.Sub(eTime).Seconds())
+	b.AddElem("TotalTPS", "", totalTPS)
+	return b.GetDesc()
+
 }

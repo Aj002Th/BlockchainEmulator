@@ -11,12 +11,15 @@ import (
 	"log"
 	"net"
 	"os"
+	"path"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/committee"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/measure"
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/meter"
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/signal"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/supervisor_log"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
@@ -38,6 +41,11 @@ type Supervisor struct {
 
 	txCompleteCount int
 	pbftItems       []webapi.PbftItem
+	OnNodeStart     sig.Signal[struct{}]
+
+	cntBooking int
+	bookings   []pbft.Booking
+	result     chan []metrics.Desc
 }
 
 var log1 = supervisor_log.Log1
@@ -58,6 +66,9 @@ func NewSupervisor() *Supervisor {
 		d.testMeasureMods = append(d.testMeasureMods, m)
 		d.blockPostedSignal.Connect(func(data pbft.BlockInfoMsg) { m.UpdateMeasureRecord(&data) })
 	}
+	d.OnNodeStart = sig.GetSignalByName[struct{}]("OnNodeStart")
+
+	d.result = make(chan []metrics.Desc)
 
 	return d
 }
@@ -90,8 +101,21 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 	// add codes here ...
 }
 
+func (d *Supervisor) handleBooking(m *pbft.Booking) {
+	d.cntBooking++
+	d.bookings = append(d.bookings, *m)
+	d.sl.Slog.Printf("handleBooking, cnt = %v\n", d.cntBooking)
+	if d.cntBooking == params.NodeNum {
+		result := meter.GetResult(&d.bookings)
+		d.sl.Slog.Printf("handleBooking now got result: %v\n", result)
+		d.sl.Slog.Printf("handleBooking now writing to channel\n")
+		d.result <- result
+	}
+}
+
 func (d *Supervisor) Run() {
 	webapi.G_Proxy.Enqueue(webapi.Started)
+	meter.SupSideStart()
 
 	// 起一个听的循环
 	go d.doAccept()
@@ -134,6 +158,13 @@ func (d *Supervisor) dispatchMessage(msg []byte) {
 		}
 		d.handleBlockInfoMsg(m)
 		// add codes for more functionality
+	case pbft.CBooking:
+		m := new(pbft.Booking)
+		err := json.Unmarshal(content, m)
+		if err != nil {
+			log.Panic()
+		}
+		d.handleBooking(m)
 	default:
 		panic("Message Unsupport")
 	}
@@ -185,15 +216,15 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 
 	d.sl.Slog.Println("Before input .csv")
 	// write to .csv file
-	dirpath := params.DataWrite_path + "supervisor_measureOutput/"
+	dirpath := path.Join(params.DataWrite_path, "supervisor_measureOutput/")
 	err := os.MkdirAll(dirpath, os.ModePerm)
 	if err != nil {
 		log.Panic(err)
 	}
-	var measureItems []webapi.MeasureItem = make([]webapi.MeasureItem, 0)
+	// var measureItems []webapi.MeasureItem = make([]webapi.MeasureItem, 0)
 
 	for _, measureMod := range d.testMeasureMods { // 遍历测试模组
-		targetPath := dirpath + measureMod.OutputMetricName() + ".csv"
+		targetPath := path.Join(dirpath, measureMod.OutputMetricName()+".csv")
 		f, err := os.Open(targetPath)
 		resultPerEpoch, totResult := measureMod.OutputRecord()
 
@@ -202,7 +233,7 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 		allResult = append(allResult, resultPerEpoch...)
 
 		// 附加到包里。
-		measureItems = append(measureItems, webapi.MeasureItem{Name: measureMod.OutputMetricName(), Desc: measureMod.GetDesc(), Vals: allResult})
+		// measureItems = append(measureItems, webapi.MeasureItem{Name: measureMod.OutputMetricName(), Desc: measure.PrintDescJson(measureMod.GetDesc()), Vals: allResult})
 
 		// 对于文件则控制精度
 		resultStr := make([]string, 0)
@@ -242,7 +273,14 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 		d.sl.Slog.Println(measureMod.OutputRecord())
 	}
 
-	webapi.G_Proxy.Enqueue(webapi.Completed(d.pbftItems, measureItems))
+	// webapi.G_Proxy.Enqueue(webapi.Completed(d.pbftItems, measureItems))
+
+	d.sl.Slog.Println("Now waiting for Other Node Bookings and result")
+
+	result := <-d.result
+	d.sl.Slog.Println("result generated")
+
+	webapi.G_Proxy.Enqueue(webapi.Completed1(d.pbftItems, result))
 
 	network.Tcp.Close()
 	d.tcpLn.Close()

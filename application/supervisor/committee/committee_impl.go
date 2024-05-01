@@ -60,8 +60,8 @@ func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 	// the txs will be sent
 	sendToShard := make(map[uint64][]*base.Transaction)
 
-	for idx := 0; idx <= len(txlist); idx++ {
-		if idx > 0 && (idx%params.InjectSpeed == 0 || idx == len(txlist)) {
+	for idx := 0; idx <= len(txlist); idx++ { // 把每个tx按顺序推进去。
+		if idx > 0 && (idx%params.InjectSpeed == 0 || idx == len(txlist)) { // 到达InjectSpeed的时候就发一个InjectTxs给Node 0。并且清空队列列表。
 			// send to shard
 			it := pbft.InjectTxs{
 				Txs:       sendToShard[0],

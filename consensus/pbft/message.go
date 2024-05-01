@@ -25,6 +25,8 @@ const (
 
 	CBlockInfo MessageType = "BlockInfo"
 	CSeqIDinfo MessageType = "SequenceID"
+
+	CBooking MessageType = "Booking"
 )
 
 var (
@@ -100,6 +102,17 @@ type BlockInfoMsg struct {
 	Relay1Txs   []*base.Transaction // cross transactions in chain first time
 
 	TxpoolSize int
+}
+
+type Booking struct {
+	AvgCpuTime float64 `json:"avgCpuTime"`
+	DiskMetric uint64  `json:"disk"`
+	// TxCount       uint64  `json:"txc"`
+	// BlockCount    uint64  `json:"bc"`
+	TotalUpload   int    `json:"tu"`
+	TotalDownload int    `json:"td"`
+	TotalTime     uint64 `json:"tm"`
+	NodeId        int    `json:"nodeid"`
 }
 
 type SeqIDinfo struct {

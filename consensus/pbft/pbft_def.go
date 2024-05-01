@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft/meter"
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
 	"github.com/Aj002Th/BlockchainEmulator/misc"
@@ -169,6 +170,7 @@ func (self *PbftConsensusNode) startSession(con net.Conn) {
 	clientReader := bufio.NewReader(con)
 	for {
 		clientRequest, err := clientReader.ReadBytes('\n') // 读到反斜杠n。
+		network.Tcp.UpdateMetric(0, len(clientRequest))
 		self.stopLock.Lock()
 		stopVal := self.stop
 		self.stopLock.Unlock()
@@ -191,6 +193,7 @@ func (self *PbftConsensusNode) startSession(con net.Conn) {
 }
 
 func (self *PbftConsensusNode) Run() {
+	meter.NodeSideStart()
 	if self.NodeID == 0 {
 		println("well my nodeid is 0 so i will do propose")
 		go self.doPropose()
@@ -225,10 +228,25 @@ func (self *PbftConsensusNode) setStopAndCleanUp() {
 	if self.NodeID == self.view {
 		self.pStop <- 1
 	}
+
+	self.pl.Println("Before GatherAndSend")
+
+	GatherAndSend(int(self.NodeID), self.pl)
+
 	network.Tcp.Close()
 	self.tcpln.Close()
 	self.CurChain.CloseBlockChain()
 	self.pl.Println("handled stop message")
+}
+
+func GatherAndSend(nodeid int, pl *log.Logger) {
+	// Procs相关
+	b := Booking{AvgCpuTime: meter.AvgCpuTime, DiskMetric: meter.DiskMetric, TotalUpload: meter.TotalUpload, TotalDownload: meter.TotalDownload, TotalTime: uint64(time.Since(meter.Time_Begin)), NodeId: nodeid}
+	m, err := json.Marshal(b)
+	if err != nil {
+		panic(err)
+	}
+	MergeAndSend(CBooking, m, params.SupervisorEndpoint, pl)
 }
 
 // this func is only invoked by main node
