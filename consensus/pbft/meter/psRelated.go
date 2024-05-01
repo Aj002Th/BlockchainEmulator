@@ -11,6 +11,7 @@ import (
 
 var AvgCpuTime float64
 var DiskMetric uint64
+var diskSampleCnt int
 
 type Nothing = struct{}
 type Void = struct{}
@@ -27,29 +28,34 @@ func StartPs() {
 	sig.Connect(func(data Nothing) { stop.Store(true) })
 
 	go func() {
-		time.Sleep(1000)
-		if stop.Load() {
-			return
+		for {
+			time.Sleep(1000)
+			if stop.Load() {
+				return
+			}
+			i, err := p.Times()
+			t := i.Total()
+			if err != nil {
+				panic("Wrong")
+			}
+			AvgCpuTime = t
 		}
-		i, err := p.Times()
-		t := i.Total()
-		if err != nil {
-			panic("Wrong")
-		}
-		AvgCpuTime = t
 	}()
 
 	go func() {
-		time.Sleep(1000)
-		if stop.Load() {
-			return
+		for {
+			time.Sleep(1000)
+			if stop.Load() {
+				return
+			}
+			i, err := p.MemoryInfo()
+			t := i.RSS
+			if err != nil {
+				panic("Wrong")
+			}
+			DiskMetric = (DiskMetric*uint64(diskSampleCnt) + t) / uint64(diskSampleCnt+1)
+			diskSampleCnt++
 		}
-		i, err := p.MemoryInfo()
-		t := i.RSS
-		if err != nil {
-			panic("Wrong")
-		}
-		DiskMetric = t
 	}()
 
 }

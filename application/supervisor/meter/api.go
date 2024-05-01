@@ -8,6 +8,8 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/params"
 	"github.com/Aj002Th/BlockchainEmulator/signal"
 	"github.com/chebyrash/promise"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 type Void = struct{}
@@ -49,13 +51,15 @@ func GetResult(ws *[]Booking) []metrics.Desc { // 每一个度量，作为一棵
 	var sumBc uint64 = 0
 	var sumDur uint64 = 0
 	var sumUp, sumDown int = 0, 0
+	p := message.NewPrinter(language.English)
 	for _, w := range *ws {
 		nn := w.NodeId
 		c := w.AvgCpuTime
 		b := w.DiskMetric
 		t := w.TotalTime
+		bStr := p.Sprintf("%d bytes", b)
 		tx.AddElem(fmt.Sprintf("节点%v CPU时间", nn), "", c)
-		bc.AddElem(fmt.Sprintf("节点%v 内存测量", nn), "", b)
+		bc.AddElem(fmt.Sprintf("节点%v 内存测量", nn), "", bStr)
 		dur.AddElem(fmt.Sprintf("节点%v 时间", nn), "", t)
 		net.AddElem(fmt.Sprintf("节点%v 上传流量(bytes)", nn), "", w.TotalUpload)
 		net.AddElem(fmt.Sprintf("节点%v 下载流量(bytes)", nn), "", w.TotalDownload)
@@ -65,9 +69,10 @@ func GetResult(ws *[]Booking) []metrics.Desc { // 每一个度量，作为一棵
 		sumUp += w.TotalUpload
 		sumDown += w.TotalDownload
 	}
-	tx.AddElem("平均计数", "", sumC/float64(params.NodeNum))
-	bc.AddElem("平均计数", "", sumBc/uint64(params.NodeNum))
-	dur.AddElem("平均运行时间", "", sumDur/uint64(params.NodeNum))
+	bStr := p.Sprintf("%d bytes", (sumBc / uint64(params.NodeNum)))
+	tx.AddElem("总计CPU时间", "", sumC/float64(params.NodeNum))
+	bc.AddElem("平均内存用量", "", bStr)
+	dur.AddElem("平均运行时间（墙上时钟）", "", sumDur/uint64(params.NodeNum))
 	net.AddElem("总计上传流量", "", sumUp/params.NodeNum)
 	net.AddElem("总计下载流量", "", sumDown/params.NodeNum)
 	ds = append(ds, tx.GetDesc())
