@@ -29,11 +29,6 @@ func NewApp(a Args) App {
 }
 
 func (self *App) Run() {
-	if self.args.batch {
-		StartNAtOnce(uint64(self.args.nodeNum))
-		return
-	}
-
 	var f *os.File
 	var err error
 	if self.args.isClient {
@@ -55,7 +50,8 @@ func (self *App) Run() {
 	}
 	defer trace.Stop()
 
-	initConfig() // 记得调用这东西初始化IP表格，否则。。后果很严重。
+	// 配置初始化, 最关键的内容是 IPmapNodeTable
+	initConfig()
 
 	if self.args.isClient {
 		BuildSupervisor(self)

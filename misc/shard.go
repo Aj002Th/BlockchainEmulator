@@ -7,7 +7,7 @@ import (
 
 type Address = string
 
-// the default method
+// Addr2Shard the default method
 func Addr2Shard(addr Address) int {
 	last16Addr := addr[len(addr)-8:]
 	num, err := strconv.ParseUint(last16Addr, 16, 64)

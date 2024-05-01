@@ -19,7 +19,6 @@ if ($N -le 2) {
     exit 1
 }
 
-
 $prefix = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
 
 $Env:BCEM_OUTPUT_PREFIX=$prefix

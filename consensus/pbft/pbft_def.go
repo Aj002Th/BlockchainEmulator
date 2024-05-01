@@ -74,7 +74,7 @@ type PbftConsensusNode struct {
 }
 
 // NewPbftNode generate a pbft consensus for a node
-func NewPbftNode(nodeID uint64, pcc *chain.Config, messageHandleType string) *PbftConsensusNode {
+func NewPbftNode(nodeID uint64, pcc *chain.Config) *PbftConsensusNode {
 	self := new(PbftConsensusNode)
 	self.ipNodeTable = params.IPmapNodeTable
 	self.nodeNums = pcc.NodesNum
@@ -113,14 +113,11 @@ func NewPbftNode(nodeID uint64, pcc *chain.Config, messageHandleType string) *Pb
 	base.NodeLog = self.pl
 
 	// choose how to handle the messages in pbft or beyond pbft
-	switch messageHandleType {
-	default:
-		self.ihm = &RawRelayPbftExtraHandleMod{
-			node: self,
-		}
-		self.ohm = &RawRelayOutsideModule{
-			node: self,
-		}
+	self.ihm = &RawRelayPbftExtraHandleMod{
+		node: self,
+	}
+	self.ohm = &RawRelayOutsideModule{
+		node: self,
 	}
 
 	return self

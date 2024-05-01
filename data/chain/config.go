@@ -7,8 +7,6 @@ type Config struct {
 	NodeID    uint64
 	BlockSize uint64
 	NodesNum  uint64
-	//BlockInterval uint64
-	//InjectSpeed   uint64
 }
 
 var (

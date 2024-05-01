@@ -67,43 +67,10 @@ func BuildSupervisor(self *App) {
 }
 
 func BuildNewPbftNode(nid, nnm uint64) {
-
-	worker := pbft.NewPbftNode(nid, makeChainConfig(nid), "Relay")
+	worker := pbft.NewPbftNode(nid, makeChainConfig(nid))
 	if nid == 0 {
 		worker.Run()
 	} else {
 		worker.Run()
 	}
-}
-
-// 单机启动时的简便方法。
-func StartNAtOnce(nnm uint64) {
-	panic("Don't you use this -g flag!")
-	// // 设置命令行参数的前缀的环境变量。没有指定就自己生成。
-	// prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
-	// if prefix == "" {
-	// 	dt := time.Now()
-	// 	prefix = dt.Format("BCEM-20060102-150405")
-	// }
-	// os.Setenv("BCEM_OUTPUT_PREFIX", prefix)
-
-	// // 获取项目根目录的正式路径。
-	// cwd, err := os.Getwd()
-	// if err != nil {
-	// 	panic("get cwd error.")
-	// }
-
-	// 构造启动
-	N := strconv.Itoa(int(nnm))
-	// 依次启动各个
-	for i := 0; i < int(nnm); i++ {
-		n := strconv.Itoa(i)
-		cmd := exec.Command("cmd", "/k", "start", "go", "run", "main.go", "-N", N, "-n", n)
-		// cmd.Dir = cwd
-		cmd.Start()
-	}
-	// 启动Supervisor
-	cmd := exec.Command("cmd", "/k", "start", "go", "run", "main.go", "-N", N, "-c")
-	// cmd.Dir = cwd
-	cmd.Start()
 }

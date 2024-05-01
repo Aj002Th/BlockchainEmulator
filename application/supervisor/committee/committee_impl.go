@@ -80,11 +80,12 @@ func (rthm *RelayCommitteeModule) txSending(txlist []*base.Transaction) {
 			break
 		}
 		tx := txlist[idx]
-		sendersid := uint64(misc.Addr2Shard(tx.Sender))
-		sendToShard[sendersid] = append(sendToShard[sendersid], tx)
+		senderSID := uint64(misc.Addr2Shard(tx.Sender))
+		sendToShard[senderSID] = append(sendToShard[senderSID], tx)
 	}
 }
 
+// MsgSendingControl
 // Sup开启的时候同步地调一次。
 // 把tx读出来然后用txSending发出去。
 // read transactions, the Number of the transactions is - batchDataNum
@@ -128,6 +129,7 @@ func (rthm *RelayCommitteeModule) MsgSendingControl() {
 	}
 }
 
+// HandleBlockInfo
 // Sup会在HandleBlockInfos里调
 // no operation here
 func (rthm *RelayCommitteeModule) HandleBlockInfo(b *pbft.BlockInfoMsg) {
