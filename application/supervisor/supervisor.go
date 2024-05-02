@@ -9,6 +9,8 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
+	"path"
 	"sync"
 	"time"
 
@@ -233,7 +235,48 @@ func (d *Supervisor) generateOutputAndCleanUp() {
 
 	webapi.GlobalProxy.Enqueue(webapi.Completed(d.pbftItems, result))
 
+	// 保证路径存在
+	err := os.MkdirAll(params.DataWritePath, 0755)
+	if err != nil {
+		panic(err)
+	}
+
+	// pbft_tx.json
+	pbftTxJsonBytes, err := json.Marshal(d.pbftItems)
+	if err != nil {
+		panic(err)
+	}
+	fPbpfTx, err := os.OpenFile(path.Join(params.DataWritePath, "pbft_tx.json"), os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		panic(err)
+	}
+	_, err = fPbpfTx.Write(pbftTxJsonBytes)
+	if err != nil {
+		panic(err)
+	}
+	err = fPbpfTx.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	// metrics_result.json
+	metricsResultJsonBytes, err := json.Marshal(result)
+	if err != nil {
+		panic(err)
+	}
+	fMetricsResult, err := os.OpenFile(path.Join(params.DataWritePath, "metrics_result.json"), os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		panic(err)
+	}
+	_, err = fMetricsResult.Write(metricsResultJsonBytes)
+	if err != nil {
+		panic(err)
+	}
+	err = fMetricsResult.Close()
+	if err != nil {
+		panic(err)
+	}
+
 	network.Tcp.Close()
-	// d.tcpLn.Close()
 	webapi.GlobalProxy.Enqueue(webapi.Bye)
 }
