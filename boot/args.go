@@ -35,7 +35,7 @@ func ParseAndBuildArg() Args {
 	pflag.StringVarP(&params.DataWritePath, "DataWritePath", "", "./result", "measurement data result output path")
 	pflag.StringVarP(&params.RecordWritePath, "RecordWritePath", "", "./record", "record output path")
 	pflag.StringVarP(&params.SupervisorEndpoint, "SupervisorEndpoint", "", "127.0.0.1:18800", "supervisor ip address")
-	pflag.StringVarP(&params.FileInput, "FileInput", "", "./BlockTransaction.csv", "the raw BlockTransaction data path")
+	pflag.StringVarP(&params.FileInput, "FileInput", "i", "./BlockTransaction.csv", "the raw BlockTransaction data path")
 
 	pflag.Parse()
 

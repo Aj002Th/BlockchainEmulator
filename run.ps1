@@ -1,6 +1,6 @@
 param (
     [int]$N = 3, # Parameter to specify the number of times to execute the command
-    [string]$Args
+    [string]$FileInput
 )
 
 if( -not ($PSVersionTable.PSVersion.Major -ge 7 )){
@@ -59,15 +59,15 @@ if ($userInput -like "N*") {
 for ($i = 1; $i -lt $N; $i++) {
     # Execute the command (replace "print n" with your desired command)
     Write-Host "Executing command $i"
-    start cmd ("/k .\blockchainEmulator.exe -n $i " + $Args)
+    start cmd ("/k .\blockchainEmulator.exe -n $i")
     # Invoke the command here
 }
 
 Write-Host "启动Supervisor"
 
-start cmd ("/k .\blockchainEmulator.exe -c -f " + $Args)
+start cmd ("/k .\blockchainEmulator.exe -c -f -i $FileInput")
 
 Write-Host "启动主节点"
-start cmd ("/k .\blockchainEmulator.exe -n 0 " + $Args)
+start cmd ("/k .\blockchainEmulator.exe -n 0")
 
 Write-Host "已启动若干节点"
