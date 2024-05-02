@@ -1,23 +1,32 @@
 package boot
 
 import (
+	"log"
+	"os/exec"
+	"strconv"
+
+	"os/exec"
+	"strconv"
+
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
 	"github.com/Aj002Th/BlockchainEmulator/params"
-	"os/exec"
-	"strconv"
 )
 
 // 初始化全局变量
 func initGlobalConfig() {
 	// 初始化 ip table
 	if _, ok := params.IPmapNodeTable[0]; !ok {
+		log.Default().Println("提示：用户指定的IpTable不存在，按照约定生成默认的IpTable")
 		params.IPmapNodeTable[0] = make(map[uint64]string)
-	}
-	for j := uint64(0); j < uint64(params.NodeNum); j++ {
-		params.IPmapNodeTable[0][j] = "127.0.0.1:" + strconv.Itoa(28800+int(j)) // shard和node决定了ip
+
+		for j := uint64(0); j < uint64(params.NodeNum); j++ {
+			params.IPmapNodeTable[0][j] = "127.0.0.1:" + strconv.Itoa(28800+int(j)) // shard和node决定了ip
+		}
+	} else {
+		log.Default().Println("提示：发现用户指定的IpTable，将使用用户指定的IpTable")
 	}
 }
 

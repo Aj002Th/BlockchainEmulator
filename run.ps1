@@ -1,5 +1,6 @@
 param (
-    [int]$N = 3 # Parameter to specify the number of times to execute the command
+    [int]$N = 3, # Parameter to specify the number of times to execute the command
+    [string]$InputCsv
 )
 
 if( -not ($PSVersionTable.PSVersion.Major -ge 7 )){
@@ -22,6 +23,7 @@ if ($N -le 2) {
 $prefix = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
 
 $Env:BCEM_OUTPUT_PREFIX=$prefix
+$Env:BCEM_INPUT_CSV=$InputCsv
 
 Write-Host "现在准备启动若干个节点。输出前缀是时间戳。: $prefix" -ForegroundColor White -BackgroundColor Green
 Write-Host ""
