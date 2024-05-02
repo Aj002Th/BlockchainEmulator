@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/measure"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/params"
@@ -16,8 +17,8 @@ import (
 type Void = struct{}
 type Booking = pbft.BookingMsg
 
-func SupSideStart() {
-	StartCommitRelate()
+func SupSideStart() []*measure.MeasureModule {
+	return StartCommitRelate()
 }
 
 var SupOnGathered signal.Signal[metrics.Desc]

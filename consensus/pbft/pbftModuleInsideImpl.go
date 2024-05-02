@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
@@ -102,9 +101,6 @@ func (self *RawPbftPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 		}
 		MergeAndSend(CBlockInfo, bByte, params.SupervisorEndpoint, self.node.pl)
 		self.node.pl.Printf("S%dN%d : sended excuted txs\n", self.node.ShardID, self.node.NodeID)
-		self.node.CurChain.TransactionPool.Locked()
-		self.node.writeCSVline([]string{strconv.Itoa(len(self.node.CurChain.TransactionPool.Queue)), strconv.Itoa(len(txExcuted))})
-		self.node.CurChain.TransactionPool.Unlocked()
 	}
 	return true
 }

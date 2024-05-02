@@ -5,19 +5,14 @@ package supervisor
 
 import (
 	"bufio"
-	"encoding/csv"
 	"encoding/json"
 	"io"
 	"log"
 	"net"
-	"os"
-	"path"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/committee"
-	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/measure"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/meter"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/metrics"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/signal"
@@ -36,7 +31,6 @@ type Supervisor struct {
 	sl                *supervisor_log.SupervisorLog // logger module
 	Ss                *signal.StopSignal            // control components// to control the stop message sending
 	cmt               committee.CommitteeModule     // supervisor and committee components
-	testMeasureMods   []measure.MeasureModule       // measure components
 	blockPostedSignal sig.Signal[pbft.BlockInfoMsg] // 内部信号
 
 	txCompleteCount int
@@ -60,15 +54,8 @@ func NewSupervisor() *Supervisor {
 	d.Ss = signal.NewStopSignal(2 * int(1))
 	d.blockPostedSignal = sig.NewAsyncSignalImpl[pbft.BlockInfoMsg]("xx")
 	d.cmt = committee.NewPbftCommitteeModule(d.IpNodeTable, d.Ss, d.sl, params.FileInput, params.TotalDataSize, params.BatchSize)
-	d.testMeasureMods = make([]measure.MeasureModule, 0)
 	d.txCompleteCount = 0
 
-	// 测量模块的附加。
-	for _, mModName := range params.MeasurePbftMod {
-		m := measure.GetByName(mModName)
-		d.testMeasureMods = append(d.testMeasureMods, m)
-		d.blockPostedSignal.Connect(func(data pbft.BlockInfoMsg) { m.UpdateMeasureRecord(&data) })
-	}
 	d.OnNodeStart = sig.GetSignalByName[struct{}]("OnNodeStart")
 
 	d.result = make(chan []metrics.Desc)
@@ -238,66 +225,6 @@ func (d *Supervisor) doAccept() {
 // close Supervisor, and record the data in .csv file
 func (d *Supervisor) generateOutputAndCleanUp() {
 	d.sl.Slog.Println("Closing...")
-	for _, measureMod := range d.testMeasureMods {
-		d.sl.Slog.Println(measureMod.OutputMetricName())
-		d.sl.Slog.Println(measureMod.OutputRecord())
-	}
-
-	d.sl.Slog.Println("Before input .csv")
-
-	// write to .csv file
-	dirPath := path.Join(params.DataWritePath, "supervisor_measureOutput/")
-	err := os.MkdirAll(dirPath, os.ModePerm)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	for _, measureMod := range d.testMeasureMods { // 遍历测试模组
-		targetPath := path.Join(dirPath, measureMod.OutputMetricName()+".csv")
-		f, err := os.Open(targetPath)
-		resultPerEpoch, totResult := measureMod.OutputRecord()
-
-		allResult := make([]float64, 0)
-		allResult = append(allResult, totResult)
-		allResult = append(allResult, resultPerEpoch...)
-
-		// 对于文件则控制精度
-		resultStr := make([]string, 0)
-		for _, result := range resultPerEpoch {
-			resultStr = append(resultStr, strconv.FormatFloat(result, 'f', 8, 64))
-		}
-
-		// 拼接
-		resultStr = append(resultStr, strconv.FormatFloat(totResult, 'f', 8, 64))
-		if err != nil && os.IsNotExist(err) { // 不存在则创建文件并写入
-			file, er := os.Create(targetPath)
-			if er != nil {
-				panic(er)
-			}
-			defer file.Close()
-
-			w := csv.NewWriter(file)
-			title := []string{measureMod.OutputMetricName()}
-			w.Write(title)
-			w.Flush()
-			w.Write(resultStr)
-			w.Flush()
-		} else { // 存在则直接写入文件
-			file, err := os.OpenFile(targetPath, os.O_APPEND|os.O_RDWR, 0666)
-			if err != nil {
-				log.Panic(err)
-			}
-			defer file.Close()
-			writer := csv.NewWriter(file)
-			err = writer.Write(resultStr)
-			if err != nil {
-				log.Panic()
-			}
-			writer.Flush()
-		}
-		f.Close()
-		d.sl.Slog.Println(measureMod.OutputRecord())
-	}
 
 	d.sl.Slog.Println("Now waiting for Other Node Bookings and result")
 
