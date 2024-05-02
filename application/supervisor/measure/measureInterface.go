@@ -12,13 +12,13 @@ func GetByName(name string) MeasureModule {
 	case "TPS_Pbft":
 		return NewTestModule_avgTPS_Pbft()
 	case "TCL_Pbft":
-		return (NewTestModule_TCL_Pbft())
+		return NewTestModule_TCL_Pbft()
 	case "CrossTxRate_Pbft":
-		return (NewTestCrossTxRate_Pbft())
+		return NewTestCrossTxRate_Pbft()
 	case "TxNumberCount_Pbft":
-		return (NewTestTxNumCount_Pbft())
+		return NewTestTxNumCount_Pbft()
 	case "BlockNumCount":
-		return (NewBlockNumCount())
+		return NewBlockNumCount()
 	default:
 		panic("Wrong Measure Name")
 		return nil
