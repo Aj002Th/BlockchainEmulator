@@ -12,7 +12,6 @@ type TestCrossTxRate_Pbft struct {
 	epochID       int
 	totTxNum      []float64
 	totCrossTxNum []float64
-	pbftTxRecord  map[string]bool // record whether the pbft1 has counted
 }
 
 func NewTestCrossTxRate_Pbft() *TestCrossTxRate_Pbft {
@@ -20,7 +19,6 @@ func NewTestCrossTxRate_Pbft() *TestCrossTxRate_Pbft {
 		epochID:       -1,
 		totTxNum:      make([]float64, 0),
 		totCrossTxNum: make([]float64, 0),
-		pbftTxRecord:  make(map[string]bool),
 	}
 }
 
@@ -40,22 +38,11 @@ func (tctr *TestCrossTxRate_Pbft) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 		tctr.epochID++
 	}
 
-	// add pbft1 txs
-	// modify the pbft map
-	for _, r1tx := range b.Pbft1Txs {
-		tctr.pbftTxRecord[string(r1tx.Hash)] = true
-		tctr.totCrossTxNum[epochid] += 0.5
-		tctr.totTxNum[epochid] += 0.5
-	}
 	// add inner-shard transaction and pbft2 transactions
-	for _, tx := range b.ExcutedTxs {
-		if _, ok := tctr.pbftTxRecord[string(tx.Hash)]; !ok {
-			// inner-shard transaction
-			tctr.totTxNum[epochid] += 1
-		} else {
-			tctr.totTxNum[epochid] += 0.5
-			tctr.totCrossTxNum[epochid] += 0.5
-		}
+	for _, _ = range b.ExcutedTxs {
+		tctr.totTxNum[epochid] += 0.5
+		tctr.totCrossTxNum[epochid] += 0.5
+
 	}
 }
 

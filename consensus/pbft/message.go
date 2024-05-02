@@ -98,10 +98,6 @@ type BlockInfoMsg struct {
 	CommitTime    time.Time // record the commit time of this block (txs)
 	SenderShardID uint64
 
-	// for transaction pbft
-	Pbft1TxNum uint64              // the number of cross shard txs
-	Pbft1Txs   []*base.Transaction // cross transactions in chain first time
-
 	TxpoolSize int
 }
 

@@ -82,7 +82,6 @@ func (self *RawPbftPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 		self.node.pl.Printf("S%dN%d : main node is trying to send pbft txs at height = %d \n", self.node.ShardID, self.node.NodeID, block.Header.Number)
 		// generate pbft pool and collect txs excuted
 		txExcuted := make([]*base.Transaction, 0)
-		pbft1Txs := make([]*base.Transaction, 0)
 		for _, tx := range block.Body {
 			txExcuted = append(txExcuted, tx)
 		}
@@ -92,8 +91,6 @@ func (self *RawPbftPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 			BlockBodyLength: len(block.Body),
 			ExcutedTxs:      txExcuted,
 			Epoch:           0,
-			Pbft1Txs:        pbft1Txs,
-			Pbft1TxNum:      uint64(len(pbft1Txs)),
 			SenderShardID:   self.node.ShardID,
 			ProposeTime:     r.ReqTime,
 			CommitTime:      time.Now(),
@@ -106,7 +103,7 @@ func (self *RawPbftPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 		MergeAndSend(CBlockInfo, bByte, params.SupervisorEndpoint, self.node.pl)
 		self.node.pl.Printf("S%dN%d : sended excuted txs\n", self.node.ShardID, self.node.NodeID)
 		self.node.CurChain.TransactionPool.Locked()
-		self.node.writeCSVline([]string{strconv.Itoa(len(self.node.CurChain.TransactionPool.Queue)), strconv.Itoa(len(txExcuted)), strconv.Itoa(int(bim.Pbft1TxNum))})
+		self.node.writeCSVline([]string{strconv.Itoa(len(self.node.CurChain.TransactionPool.Queue)), strconv.Itoa(len(txExcuted))})
 		self.node.CurChain.TransactionPool.Unlocked()
 	}
 	return true
