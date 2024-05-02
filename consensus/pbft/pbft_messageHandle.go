@@ -2,13 +2,14 @@ package pbft
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
+
+	"github.com/Aj002Th/BlockchainEmulator/logger"
 )
 
 func (self *PbftConsensusNode) handlePrePrepare(ppmsg *PrePrepare) {
 	self.RunningNode.PrintNode()
-	fmt.Println("received the PrePrepare ...")
+	logger.Println("received the PrePrepare ...")
 	// decode the message
 	flag := false
 	if digest := getDigest(ppmsg.RequestMsg); string(digest) != string(ppmsg.Digest) {

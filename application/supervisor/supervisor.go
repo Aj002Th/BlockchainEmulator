@@ -47,8 +47,6 @@ type Supervisor struct {
 	waitMasterReady chan struct{}
 }
 
-var log1 = supervisor_log.Log1
-
 func NewSupervisor() *Supervisor {
 	d := &Supervisor{}
 	d.IpNodeTable = params.IPmapNodeTable
@@ -75,20 +73,20 @@ func NewSupervisor() *Supervisor {
 // 根据Body长度决定是否Inc.
 // 并且触发测量模块。
 func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
-	log1.Println("in handleBlockInfos")
+	supervisor_log.DebugLog.Println("in handleBlockInfos")
 
-	log1.Println("StopSignal Check")
+	supervisor_log.DebugLog.Println("StopSignal Check")
 
 	// StopSignal check
 	if m.BlockBodyLength == 0 {
-		log1.Println("BodyLength == 0, Inc")
+		supervisor_log.DebugLog.Println("BodyLength == 0, Inc")
 		d.Ss.StopGap_Inc()
 	} else {
-		log1.Println("BodyLength != 0, Reset")
+		supervisor_log.DebugLog.Println("BodyLength != 0, Reset")
 		d.Ss.StopGap_Reset()
 	}
 
-	log1.Printf("received from shard %d in epoch %d.\n", m.SenderShardID, m.Epoch)
+	supervisor_log.DebugLog.Printf("received from shard %d in epoch %d.\n", m.SenderShardID, m.Epoch)
 
 	d.txCompleteCount += len(m.ExcutedTxs)
 	webapi.GlobalProxy.Enqueue(webapi.Computing(params.TotalDataSize, d.txCompleteCount))
@@ -132,7 +130,7 @@ func (d *Supervisor) Run() {
 
 	// 无脑发送全部东西给主节点。
 	d.cmt.MsgSendingControl()
-	log1.Println("afterMsgSendingControl")
+	supervisor_log.DebugLog.Println("afterMsgSendingControl")
 
 	// 发完之后开始准备在恰当时机发送Stop信息。
 	for !d.Ss.GapEnough() { // wait all txs to be handled
@@ -142,8 +140,8 @@ func (d *Supervisor) Run() {
 	d.sl.Slog.Println("Supervisor: now sending stop message to all nodes")
 
 	for nid := uint64(0); nid < uint64(params.NodeNum); nid++ {
-		log1.Printf("Sending a %v: %v\n", pbft.CStop, string([]byte("this is a stop message~")))
-		pbft.MergeAndSend(pbft.CStop, []byte("this is a stop message~"), d.IpNodeTable[0][nid], log1)
+		supervisor_log.DebugLog.Printf("Sending a %v: %v\n", pbft.CStop, string([]byte("this is a stop message~")))
+		pbft.MergeAndSend(pbft.CStop, []byte("this is a stop message~"), d.IpNodeTable[0][nid], supervisor_log.DebugLog)
 	}
 
 	d.sl.Slog.Println("Supervisor: now Closing. Now Generate Metrics Outputs.")
@@ -155,9 +153,9 @@ func (d *Supervisor) Run() {
 func (d *Supervisor) dispatchMessage(msg []byte) {
 	msgType, content := pbft.SplitMessage(msg)
 	if len(content) > 2000 {
-		log1.Printf("Received a %v: %v\n", msgType, string(content[:2000]))
+		supervisor_log.DebugLog.Printf("Received a %v: %v\n", msgType, string(content[:2000]))
 	} else {
-		log1.Printf("Received a %v: %v\n", msgType, string(content))
+		supervisor_log.DebugLog.Printf("Received a %v: %v\n", msgType, string(content))
 	}
 	switch msgType {
 	case pbft.CKeepAlive: // 用于确认主节点的启动情况

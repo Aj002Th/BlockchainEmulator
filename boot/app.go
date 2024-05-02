@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"runtime/trace"
 
+	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/supervisor_log"
+	"github.com/Aj002Th/BlockchainEmulator/logger"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
@@ -51,6 +53,8 @@ func (self *App) Run() {
 	}
 	defer trace.Stop()
 
+	supervisor_log.DebugLog = supervisor_log.NewLogger1()
+	logger.InitLogger()
 	// 配置初始化, 最关键的内容是 IPmapNodeTable
 	initGlobalConfig()
 

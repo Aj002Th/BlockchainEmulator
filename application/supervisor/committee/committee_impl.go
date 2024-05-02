@@ -27,8 +27,6 @@ type PbftCommitteeModule struct {
 	Ss           *signal.StopSignal // to control the stop message sending
 }
 
-var log1 = supervisor_log.Log1
-
 func NewPbftCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *PbftCommitteeModule {
 	return &PbftCommitteeModule{
 		csvPath:      csvFilePath,
@@ -74,7 +72,7 @@ func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 			if err != nil {
 				log.Panic(err)
 			}
-			pbft.MergeAndSend(pbft.CInject, itByte, rthm.IpNodeTable[0][0], log1)
+			pbft.MergeAndSend(pbft.CInject, itByte, rthm.IpNodeTable[0][0], supervisor_log.DebugLog)
 
 			sendToShard = make(map[uint64][]*base.Transaction)
 			time.Sleep(time.Second)
@@ -93,7 +91,7 @@ func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 // 把tx读出来然后用txSending发出去。
 // read transactions, the Number of the transactions is - batchDataNum
 func (rthm *PbftCommitteeModule) MsgSendingControl() {
-	log1.Println("in MsgSendingControl")
+	supervisor_log.DebugLog.Println("in MsgSendingControl")
 
 	txFile, err := os.Open(rthm.csvPath)
 	if err != nil {
@@ -140,6 +138,6 @@ func (rthm *PbftCommitteeModule) MsgSendingControl() {
 // Sup会在HandleBlockInfos里调
 // no operation here
 func (rthm *PbftCommitteeModule) HandleBlockInfo(b *pbft.BlockInfoMsg) {
-	// log1.Println("module HandleBlockInfo")
+	// supervisor_log.DebugLog.Println("module HandleBlockInfo")
 	// NOTHING TO DO
 }

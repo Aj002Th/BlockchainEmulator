@@ -1,6 +1,6 @@
 param (
     [int]$N = 3, # Parameter to specify the number of times to execute the command
-    [string]$InputCsv
+    [string]$Args
 )
 
 if( -not ($PSVersionTable.PSVersion.Major -ge 7 )){
@@ -23,7 +23,6 @@ if ($N -le 2) {
 $prefix = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
 
 $Env:BCEM_OUTPUT_PREFIX=$prefix
-$Env:BCEM_INPUT_CSV=$InputCsv
 
 Write-Host "现在准备启动若干个节点。输出前缀是时间戳。: $prefix" -ForegroundColor White -BackgroundColor Green
 Write-Host ""
@@ -60,14 +59,15 @@ if ($userInput -like "N*") {
 for ($i = 1; $i -lt $N; $i++) {
     # Execute the command (replace "print n" with your desired command)
     Write-Host "Executing command $i"
-    start cmd "/k .\blockchainEmulator.exe -n $i"
+    start cmd ("/k .\blockchainEmulator.exe -n $i " + $Args)
     # Invoke the command here
 }
 
 Write-Host "启动Supervisor"
-start cmd '/k .\blockchainEmulator.exe -c -f'
+
+start cmd ("/k .\blockchainEmulator.exe -c -f " + $Args)
 
 Write-Host "启动主节点"
-start cmd '/k .\blockchainEmulator.exe -n 0'
+start cmd ("/k .\blockchainEmulator.exe -n 0 " + $Args)
 
 Write-Host "已启动若干节点"

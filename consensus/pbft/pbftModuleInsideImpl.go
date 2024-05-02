@@ -9,6 +9,7 @@ import (
 
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
+	"github.com/Aj002Th/BlockchainEmulator/logger"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
@@ -48,7 +49,7 @@ func (self *RawPbftPbftExtraHandleMod) HandleinPrePrepare(ppmsg *PrePrepare) boo
 
 // the operation in prepare, and in pbft + tx pbfting, this function does not need to do any.
 func (self *RawPbftPbftExtraHandleMod) HandleinPrepare(pmsg *Prepare) bool {
-	fmt.Println("No operations are performed in Extra handle mod")
+	logger.Println("No operations are performed in Extra handle mod")
 	return true
 }
 
@@ -62,7 +63,7 @@ func PrintBlockChain(bc *chain.BlockChain) string {
 		bc.BlockStorage,
 	}
 	res := fmt.Sprintf("%v\n", vals)
-	fmt.Println(res)
+	logger.Println(res)
 	return res
 }
 

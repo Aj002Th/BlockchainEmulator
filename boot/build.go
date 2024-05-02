@@ -5,9 +5,6 @@ import (
 	"os/exec"
 	"strconv"
 
-	"os/exec"
-	"strconv"
-
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
