@@ -3,14 +3,12 @@ package signal
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync/atomic"
 
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/supervisor_log"
+	"github.com/Aj002Th/BlockchainEmulator/logger"
 	"github.com/chebyrash/promise"
 )
-
-var log1 *log.Logger = supervisor_log.Log1
 
 // Channel和FANOUT风格的异步信号机制。
 // 只能支持在进程内通信。
@@ -57,20 +55,20 @@ func (self AsyncSignalImpl[DATA]) GetName() string {
 
 // Connect cb在一个goroutine上依次调用，没有数据竞争。所以cb不要写阻塞代码。
 func (self AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时候只准传函数和lambda，不准传方法。
-	fmt.Printf("Connect &cb: %v\n", &cb)
-	fmt.Printf("Connect cb: %v\n", cb)
+	logger.Printf("Connect &cb: %v\n", &cb)
+	logger.Printf("Connect cb: %v\n", cb)
 	val := NewVal[DATA]()
-	fmt.Printf("val: %v\n", val)
+	logger.Printf("val: %v\n", val)
 	self.outChannels[CbToIdx(cb)] = val
 	go func() { // 运行消息队列
 		for {
-			log1.Printf("Signal %v, now waiting for channel %v\n", self.name, val.cd)
+			logger.Printf("Signal %v, now waiting for channel %v\n", self.name, val.cd)
 
 			data := <-val.cd
 			if val.canceled.Load() {
 				return
 			}
-			log1.Printf("Signal %v, now calling callback from channel %v\n", self.name, val.cd)
+			logger.Printf("Signal %v, now calling callback from channel %v\n", self.name, val.cd)
 			cb(data)
 		}
 	}()
@@ -79,10 +77,10 @@ func (self AsyncSignalImpl[DATA]) Connect(cb func(data DATA)) bool { // 到时�
 
 // Disconnect 返回值：操作是否成功
 func (self AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
-	log1.Printf("Signal %v, now setting cancel\n", self.name)
-	fmt.Printf("self.outChannels: %v\n", self.outChannels)
-	fmt.Printf("Disc &cb: %v\n", &cb)
-	fmt.Printf("Disc cb: %v\n", cb)
+	supervisor_log.DebugLog.Printf("Signal %v, now setting cancel\n", self.name)
+	supervisor_log.DebugLog.Printf("self.outChannels: %v\n", self.outChannels)
+	supervisor_log.DebugLog.Printf("Disc &cb: %v\n", &cb)
+	supervisor_log.DebugLog.Printf("Disc cb: %v\n", cb)
 	self.outChannels[CbToIdx(cb)].canceled.Store(true)
 	delete(self.outChannels, CbToIdx(cb))
 	return true
@@ -91,7 +89,7 @@ func (self AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
 // Emit 不会阻塞, 用Promise Then串起来了, 同时能够保持data调用的顺序。
 func (self AsyncSignalImpl[DATA]) Emit(data DATA) {
 	for _, val := range self.outChannels {
-		log1.Printf("Signal %v, sending to channel %v\n", self.name, val.cd)
+		supervisor_log.DebugLog.Printf("Signal %v, sending to channel %v\n", self.name, val.cd)
 		// val.cd <- data
 		ctx := context.Background()
 		self.lastEmit = promise.Then(self.lastEmit, ctx, func(int) (int, error) {

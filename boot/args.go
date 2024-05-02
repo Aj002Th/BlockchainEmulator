@@ -1,10 +1,12 @@
 package boot
 
 import (
+	"log"
+	"os"
+	"path"
+
 	"github.com/Aj002Th/BlockchainEmulator/params"
 	"github.com/spf13/pflag"
-	"path"
-	"time"
 )
 
 type Args struct {
@@ -33,12 +35,18 @@ func ParseAndBuildArg() Args {
 	pflag.StringVarP(&params.DataWritePath, "DataWritePath", "", "./result", "measurement data result output path")
 	pflag.StringVarP(&params.RecordWritePath, "RecordWritePath", "", "./record", "record output path")
 	pflag.StringVarP(&params.SupervisorEndpoint, "SupervisorEndpoint", "", "127.0.0.1:18800", "supervisor ip address")
-	pflag.StringVarP(&params.FileInput, "FileInput", "", "./BlockTransaction.csv", "the raw BlockTransaction data path")
+	pflag.StringVarP(&params.FileInput, "FileInput", "i", "./BlockTransaction.csv", "the raw BlockTransaction data path")
 
 	pflag.Parse()
 
+	log.Default().Println("ParsePFlagHit")
+
+	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
+	if prefix == "" {
+		panic("Set the BCEM_OUTPUT_PREFIX env var!")
+	}
 	// 生成结果文件对应的输出目录
-	prefix := time.Now().Format("01-02-2006-15-04-05")
+	// prefix := time.Now().Format("01-02-2006-15-04-05")
 	lPath := path.Join(params.LogWritePath, prefix)
 	dPath := path.Join(params.DataWritePath, prefix)
 	rPath := path.Join(params.RecordWritePath, prefix)

@@ -2,13 +2,13 @@ package chain
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"math/big"
 	"time"
 
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/data/mpt"
+	"github.com/Aj002Th/BlockchainEmulator/logger"
 	"github.com/Aj002Th/BlockchainEmulator/storage/blockStorage"
 	"github.com/Aj002Th/BlockchainEmulator/storage/stateStorage"
 )
@@ -43,7 +43,7 @@ func (bc *BlockChain) SendTransactionsPool(txs []*base.Transaction) {
 
 // GetUpdateStatusTrie 处理交易并更新状态树, 返回更新后的状态树根
 func (bc *BlockChain) GetUpdateStatusTrie(txs []*base.Transaction) []byte {
-	fmt.Printf("The len of txs is %d\n", len(txs))
+	logger.Printf("The len of txs is %d\n", len(txs))
 
 	// 如果没有交易产生, 说明状态树无需更新, 直接返回当前区块的状态树根
 	if len(txs) == 0 {
@@ -58,7 +58,7 @@ func (bc *BlockChain) GetUpdateStatusTrie(txs []*base.Transaction) []byte {
 		senderStateEncoded, _ := st.Get([]byte(tx.Sender))
 		var senderState *base.AccountState
 		if senderStateEncoded == nil {
-			// fmt.Println("missing account SENDER, now adding account")
+			// logger.Println("missing account SENDER, now adding account")
 			ib := new(big.Int)
 			ib.Add(ib, InitBalance)
 			senderState = &base.AccountState{
@@ -70,7 +70,7 @@ func (bc *BlockChain) GetUpdateStatusTrie(txs []*base.Transaction) []byte {
 		}
 		senderBalance := senderState.Balance
 		if senderBalance.Cmp(tx.Value) == -1 {
-			fmt.Printf("the balance is less than the transfer amount\n")
+			logger.Printf("the balance is less than the transfer amount\n")
 			continue
 		}
 		senderState.Deduct(tx.Value)
@@ -84,7 +84,7 @@ func (bc *BlockChain) GetUpdateStatusTrie(txs []*base.Transaction) []byte {
 		recipientStateEncoded, _ := st.Get([]byte(tx.Recipient))
 		var recipientState *base.AccountState
 		if recipientStateEncoded == nil {
-			// fmt.Println("missing account RECIPIENT, now adding account")
+			// logger.Println("missing account RECIPIENT, now adding account")
 			ib := new(big.Int)
 			ib.Add(ib, InitBalance)
 			recipientState = &base.AccountState{
@@ -108,7 +108,7 @@ func (bc *BlockChain) GetUpdateStatusTrie(txs []*base.Transaction) []byte {
 	}
 	st.Commit()
 	rt := st.RootHash()
-	fmt.Println("modified account number is ", cnt)
+	logger.Println("modified account number is ", cnt)
 	return rt
 }
 
@@ -158,13 +158,13 @@ func (bc *BlockChain) AddGenisisBlock(gb *base.Block) {
 // AddBlock 添加一个区块
 func (bc *BlockChain) AddBlock(b *base.Block) {
 	if b.Header.Number != bc.CurrentBlock.Header.Number+1 {
-		fmt.Println("the block height is not correct")
+		logger.Println("the block height is not correct")
 		return
 	}
 	// if this block is mined by the node, the transactions is no need to be handled again
 	if b.Header.Miner != bc.Config.NodeID {
 		rt := bc.GetUpdateStatusTrie(b.Body)
-		fmt.Println(bc.CurrentBlock.Header.Number+1, "the root = ", rt)
+		logger.Println(bc.CurrentBlock.Header.Number+1, "the root = ", rt)
 	}
 	bc.CurrentBlock = b
 	bc.BlockStorage.AddBlock(b)
@@ -173,10 +173,10 @@ func (bc *BlockChain) AddBlock(b *base.Block) {
 // IsValidBlock 验证区块能否合法地上链
 func (bc *BlockChain) IsValidBlock(b *base.Block) error {
 	if string(b.Header.ParentBlockHash) != string(bc.CurrentBlock.Hash) {
-		fmt.Println("the parent block hash is not equal to the current block hash")
+		logger.Println("the parent block hash is not equal to the current block hash")
 		return errors.New("the parent block hash is not equal to the current block hash")
 	} else if string(GetTxTreeRoot(b.Body)) != string(b.Header.TxRoot) {
-		fmt.Println("the transaction root is wrong")
+		logger.Println("the transaction root is wrong")
 		return errors.New("the transaction root is wrong")
 	}
 	return nil
@@ -184,7 +184,7 @@ func (bc *BlockChain) IsValidBlock(b *base.Block) error {
 
 // AddAccounts 新建账户
 func (bc *BlockChain) AddAccounts(ac []string, as []*base.AccountState) {
-	fmt.Printf("The len of accounts is %d, now adding the accounts\n", len(ac))
+	logger.Printf("The len of accounts is %d, now adding the accounts\n", len(ac))
 
 	bh := &base.BlockHeader{
 		ParentBlockHash: bc.CurrentBlock.Hash,
@@ -258,7 +258,7 @@ func (bc *BlockChain) CloseBlockChain() {
 
 // NewBlockChain 创建区块链
 func NewBlockChain(conf *Config, stateDB stateStorage.StateStorage, blockDB blockStorage.BlockStorage) (*BlockChain, error) {
-	fmt.Println("Generating a new blockchain")
+	logger.Println("Generating a new blockchain")
 	bc := &BlockChain{
 		Config:          conf,
 		CurrentBlock:    nil,
@@ -271,26 +271,26 @@ func NewBlockChain(conf *Config, stateDB stateStorage.StateStorage, blockDB bloc
 	// 如果区块链是空的, 则创建创世区块
 	curHash, err := bc.BlockStorage.GetNewestBlockHash()
 	if err != nil {
-		fmt.Println("Get newest block hash err")
+		logger.Println("Get newest block hash err")
 		// 如果是没能找到最新区块的hash，那么说明这个存储里面是空的，需要创建创世区块
 		if err.Error() == "cannot find the newest block hash" {
 			genisisBlock := bc.NewGenisisBlock()
 			bc.AddGenisisBlock(genisisBlock)
-			fmt.Println("New genisis block")
+			logger.Println("New genisis block")
 			return bc, nil
 		}
 		log.Panic(err)
 	}
 
 	// 获取最新的区块作为链尾
-	fmt.Println("Existing blockchain found")
+	logger.Println("Existing blockchain found")
 	curb, err := bc.BlockStorage.GetBlock(curHash)
 	if err != nil {
 		log.Panic(err)
 	}
 	bc.CurrentBlock = curb
 
-	fmt.Println("The status trie can be built")
-	fmt.Println("Generated a new blockchain successfully")
+	logger.Println("The status trie can be built")
+	logger.Println("Generated a new blockchain successfully")
 	return bc, nil
 }

@@ -1,6 +1,6 @@
 package signal
 
-import "fmt"
+import "github.com/Aj002Th/BlockchainEmulator/logger"
 
 // 信号。实例代表某种信号。可以注册或者卸载lambda函数。
 type Signal[DATA any] interface {
@@ -30,7 +30,7 @@ func GetSignalByName[DATA any](name string) Signal[DATA] {
 	v, ok := globalSigs[name]
 	if !ok {
 		newVal := NewAsyncSignalImpl[DATA](name)
-		fmt.Printf("Warning: GetSig Creating a New Sig In GetByName %v Because No Name Found", name)
+		logger.Printf("Warning: GetSig Creating a New Sig In GetByName %v Because No Name Found", name)
 		globalSigs[name] = newVal
 		return newVal
 	}

@@ -2,9 +2,7 @@
 
 package pbft
 
-import (
-	"fmt"
-)
+import "github.com/Aj002Th/BlockchainEmulator/logger"
 
 type Node struct {
 	NodeID  uint64
@@ -18,5 +16,5 @@ func (n *Node) PrintNode() {
 		n.ShardID,
 		n.IPaddr,
 	}
-	fmt.Printf("%v\n", v)
+	logger.Printf("%v\n", v)
 }
