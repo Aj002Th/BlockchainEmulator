@@ -76,7 +76,7 @@ func GetResult(ws *[]Booking) []metrics.Desc { // 每一个度量，作为一棵
 		sumDown += w.TotalDownload
 	}
 	tt := sumDur / time.Duration(params.NodeNum)
-	bStr := p.Sprintf("%d bytes", (sumBc / uint64(params.NodeNum)))
+	bStr := p.Sprintf("%d bytes", sumBc/uint64(params.NodeNum))
 	tx.AddElem("平均CPU负载", "平均的CPU负载", fmt.Sprintf("%.1f %%", sumC/float64(params.NodeNum)))
 	bc.AddElem("平均内存用量", "平均的内存用量", bStr)
 	dur.AddElem("平均运行时间（墙上时钟）", "平均运行时间，基准是Wall Time", fmt.Sprintf("%v min %v sec", int(tt.Minutes()), int(tt.Seconds())-int(tt.Minutes())*60))

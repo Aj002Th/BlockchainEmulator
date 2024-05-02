@@ -104,7 +104,7 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 	d.txCompleteCount += len(m.ExcutedTxs)
 	webapi.GlobalProxy.Enqueue(webapi.Computing(params.TotalDataSize, d.txCompleteCount))
 
-	pbftItem := webapi.PbftItem{TxpoolSize: int(m.TxpoolSize), Tx: len(m.ExcutedTxs), Ctx: int(m.Pbft1TxNum)}
+	pbftItem := webapi.PbftItem{TxpoolSize: m.TxpoolSize, Tx: len(m.ExcutedTxs), Ctx: int(m.Pbft1TxNum)}
 	d.pbftItems = append(d.pbftItems, pbftItem)
 	// measure update
 	d.blockPostedSignal.Emit(*m)

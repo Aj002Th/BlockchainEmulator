@@ -172,18 +172,7 @@ type PbftItem struct {
 	Ctx        int `json:"ctx"`
 }
 
-type MeasureItem struct {
-	Name string    `json:"name"`
-	Desc string    `json:"desc"`
-	Vals []float64 `json:"vals"`
-}
-
-type Re struct {
-	PbftShardCsv   []PbftItem    `json:"pbftShardCsv"`
-	MeasureOutputs []MeasureItem `json:"measureOutputs"`
-}
-
-type Re1 struct {
+type Report struct {
 	PbftShardCsv   []PbftItem     `json:"pbftShardCsv"`
 	MeasureOutputs []metrics.Desc `json:"measureOutputs"`
 }
@@ -206,8 +195,11 @@ var Computing = func(Total int, Count int) Msg {
 
 var Completed = func(PbftShardCsv []PbftItem, desc []metrics.Desc) Msg {
 	return Msg{
-		Type:    "completed",
-		Content: Re1{PbftShardCsv: PbftShardCsv, MeasureOutputs: desc},
+		Type: "completed",
+		Content: Report{
+			PbftShardCsv:   PbftShardCsv,
+			MeasureOutputs: desc,
+		},
 	}
 }
 
