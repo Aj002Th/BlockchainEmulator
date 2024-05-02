@@ -19,7 +19,7 @@ func CommitFeed(bim *pbft.BlockInfoMsg) {
 	m6.UpdateMeasureRecord(bim)
 }
 
-func StartCommitRelate() {
+func StartCommitRelate() []*measure.MeasureModule {
 	m1 = measure.NewTestModule_TCL_Pbft()
 	m2 = measure.NewTestModule_avgTPS_Pbft()
 	m3 = measure.NewPCL()
@@ -28,4 +28,5 @@ func StartCommitRelate() {
 
 	sig := signal.GetSignalByName[*pbft.BlockInfoMsg]("OnBimReached")
 	sig.Connect(CommitFeed)
+	return []*measure.MeasureModule{&m1, &m2, &m3, &m4, &m6}
 }

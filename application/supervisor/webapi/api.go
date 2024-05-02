@@ -169,7 +169,6 @@ func RunApiServer() {
 type PbftItem struct {
 	TxpoolSize int `json:"txpool_size"`
 	Tx         int `json:"tx"`
-	Ctx        int `json:"ctx"`
 }
 
 type MeasureItem struct {

@@ -11,10 +11,9 @@ import (
 // to test average TPS in this system
 type TestModule_avgTPS_Pbft struct {
 	epochID      int
-	excutedTxNum []float64       // record how many excuted txs in a epoch, maybe the cross shard tx will be calculated as a 0.5 tx
-	pbftTx       map[string]bool // record whether a pbftTx or not
-	startTime    []time.Time     // record when the epoch starts
-	endTime      []time.Time     // record when the epoch ends
+	excutedTxNum []float64   // record how many excuted txs in a epoch, maybe the cross shard tx will be calculated as a 0.5 tx
+	startTime    []time.Time // record when the epoch starts
+	endTime      []time.Time // record when the epoch ends
 }
 
 func NewTestModule_avgTPS_Pbft() *TestModule_avgTPS_Pbft {
@@ -23,7 +22,6 @@ func NewTestModule_avgTPS_Pbft() *TestModule_avgTPS_Pbft {
 		excutedTxNum: make([]float64, 0),
 		startTime:    make([]time.Time, 0),
 		endTime:      make([]time.Time, 0),
-		pbftTx:       make(map[string]bool),
 	}
 }
 
@@ -48,17 +46,9 @@ func (tat *TestModule_avgTPS_Pbft) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 		tat.endTime = append(tat.endTime, time.Time{})
 		tat.epochID++
 	}
-	// modify the local epoch
-	for _, tx := range b.Pbft1Txs {
-		tat.pbftTx[string(tx.Hash)] = true
-	}
-	tat.excutedTxNum[epochid] += float64(b.Pbft1TxNum) / 2
-	for _, tx := range b.ExcutedTxs {
-		if _, ok := tat.pbftTx[string(tx.Hash)]; ok {
-			tat.excutedTxNum[epochid] += 0.5
-		} else {
-			tat.excutedTxNum[epochid] += 1
-		}
+	for _, _ = range b.ExcutedTxs {
+		tat.excutedTxNum[epochid] += 1
+
 	}
 	if tat.startTime[epochid].IsZero() || tat.startTime[epochid].After(earliestTime) {
 		tat.startTime[epochid] = earliestTime
