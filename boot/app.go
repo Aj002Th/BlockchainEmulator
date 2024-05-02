@@ -45,13 +45,14 @@ func (self *App) Run() {
 		}
 	}()
 
+	// 启动 trace, 生成火焰图
 	if err := trace.Start(f); err != nil {
 		log.Fatalf("failed to start trace: %v", err)
 	}
 	defer trace.Stop()
 
 	// 配置初始化, 最关键的内容是 IPmapNodeTable
-	initConfig()
+	initGlobalConfig()
 
 	if self.args.isClient {
 		BuildSupervisor(self)

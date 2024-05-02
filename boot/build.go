@@ -1,41 +1,24 @@
 package boot
 
 import (
-	"os"
-	"os/exec"
-	"path"
-	"strconv"
-
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/chain"
 	"github.com/Aj002Th/BlockchainEmulator/params"
+	"os/exec"
+	"strconv"
 )
 
-// 初始化params。原params内容只是Preset，现在覆写它。包括Endpoint列表、输出路径。
-func initConfig() {
+// 初始化全局变量
+func initGlobalConfig() {
+	// 初始化 ip table
 	if _, ok := params.IPmapNodeTable[0]; !ok {
 		params.IPmapNodeTable[0] = make(map[uint64]string)
 	}
 	for j := uint64(0); j < uint64(params.NodeNum); j++ {
 		params.IPmapNodeTable[0][j] = "127.0.0.1:" + strconv.Itoa(28800+int(j)) // shard和node决定了ip
 	}
-
-	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
-	if prefix == "" {
-		panic("Set the BCEM_OUTPUT_PREFIX env var!")
-	}
-
-	// 暂定两个文件夹。然后试着生成。不行就加后缀。
-	lPath := path.Join(params.LogWritePath, prefix)
-	dPath := path.Join(params.DataWritePath, prefix)
-	rPath := path.Join(params.RecordWritePath, prefix)
-
-	// 覆写全局变量
-	params.LogWritePath = lPath
-	params.DataWritePath = dPath
-	params.RecordWritePath = rPath
 }
 
 func makeChainConfig(nid uint64) *chain.Config {
