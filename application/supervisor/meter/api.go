@@ -27,10 +27,10 @@ func GetResult(bookings *[]Booking) []metrics.Desc { // 每一个度量，作为
 	var ds = make([]metrics.Desc, 0)
 
 	// 统计TxCount和BlockNum和运行时间
-	tx := metrics.NewDescBuilder("CPU时间", "交易计数，是指对交易的计数。")
-	bc := metrics.NewDescBuilder("内存测量", "交易计数，是指对交易的计数。")
-	dur := metrics.NewDescBuilder("墙上时钟时间", "")
-	net := metrics.NewDescBuilder("网络", "")
+	tx := metrics.NewDescBuilder("CPU负载", "系统运行过程中各节点CPU负载大小的统计。")
+	bc := metrics.NewDescBuilder("内存测量", "内存测量，对运行过程中各个节点的内存占用统计。")
+	dur := metrics.NewDescBuilder("墙上时钟时间", "运行过程中经历的实际时间统计。")
+	net := metrics.NewDescBuilder("网络", "对上载流量、下载流量的统计。")
 	var sumC float64 = 0
 	var sumBc uint64 = 0
 	var sumDur time.Duration = 0
