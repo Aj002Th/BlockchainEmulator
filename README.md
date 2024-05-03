@@ -19,11 +19,11 @@
 
 项目运行完成后，将生成统计报表。统计报表包括 PBFT 交易池统计量：
 
-<img src="./docs/pbft_pool_barchart_view.png" width="400" alt="运行后生成的分组柱状图">
+<img src="./docs/images/pbft_pool_barchart_view.png" width="400" alt="运行后生成的分组柱状图">
 
 同时，统计报表也包括一些别的系统度量：
 
-<img src="./docs/output_metrics.png" width="400" alt="运行后生成的度量结果">
+<img src="./docs/images/output_metrics.png" width="400" alt="运行后生成的度量结果">
 
 
 ## 构建工具
