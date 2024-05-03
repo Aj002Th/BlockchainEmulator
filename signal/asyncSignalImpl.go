@@ -17,7 +17,7 @@ import (
 
 type ChanCancel = chan int
 
-type Val[DATA any] struct { // TODO: 加一个调试信息，比如函数名字之类，方便调试
+type Val[DATA any] struct {
 	cd       chan DATA
 	cc       ChanCancel
 	canceled *atomic.Bool

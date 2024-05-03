@@ -4,10 +4,10 @@ import (
 	"time"
 )
 
-var Time_Begin time.Time
+var TimeBegin time.Time
 
 func onBegin() {
-	Time_Begin = time.Now()
+	TimeBegin = time.Now()
 }
 
 func StartTimeCnt() {

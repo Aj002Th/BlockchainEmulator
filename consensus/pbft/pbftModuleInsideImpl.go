@@ -13,17 +13,16 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
-// simple implementation of pbftHandleModule interface ...
+// RawPbftPbftExtraHandleMod simple implementation of pbftHandleModule interface ...
 // only for block request and use transaction pbft
 type RawPbftPbftExtraHandleMod struct {
-	node *PbftConsensusNode
 	// pointer to pbft data
+	node *ConsensusNode
 }
 
-// propose request with different types
-// 调用GenerateBlock产生一个区块。其实这个做的就是从交易池子里取出至多n个交易，并且弄成一个新区块。
-// 更骚的是，没有新区块也会照样执行不误。。。所以Sup不给主节点东西他也会一直自娱自乐。
-func (self *RawPbftPbftExtraHandleMod) HandleinPropose() (bool, *Request) {
+// HandleInPropose propose request with different types
+// 调用GenerateBlock产生一个区块。从交易池子里取出至多n个交易，并且生成一个新区块。
+func (self *RawPbftPbftExtraHandleMod) HandleInPropose() (bool, *Request) {
 	// new blocks
 	block := self.node.CurChain.GenerateBlock()
 	r := &Request{
@@ -36,7 +35,7 @@ func (self *RawPbftPbftExtraHandleMod) HandleinPropose() (bool, *Request) {
 }
 
 // the diy operation in preprepare
-func (self *RawPbftPbftExtraHandleMod) HandleinPrePrepare(ppmsg *PrePrepare) bool {
+func (self *RawPbftPbftExtraHandleMod) HandleInPrePrepare(ppmsg *PrePrepare) bool {
 	if self.node.CurChain.IsValidBlock(base.DecodeBlock(ppmsg.RequestMsg.Msg.Content)) != nil {
 		self.node.pl.Printf("S%dN%d : not a valid block\n", self.node.ShardID, self.node.NodeID)
 		return false
@@ -48,7 +47,7 @@ func (self *RawPbftPbftExtraHandleMod) HandleinPrePrepare(ppmsg *PrePrepare) boo
 }
 
 // the operation in prepare, and in pbft + tx pbfting, this function does not need to do any.
-func (self *RawPbftPbftExtraHandleMod) HandleinPrepare(pmsg *Prepare) bool {
+func (self *RawPbftPbftExtraHandleMod) HandleInPrepare(pmsg *Prepare) bool {
 	logger.Println("No operations are performed in Extra handle mod")
 	return true
 }
@@ -68,7 +67,7 @@ func PrintBlockChain(bc *chain.BlockChain) string {
 }
 
 // the operation in commit.
-func (self *RawPbftPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
+func (self *RawPbftPbftExtraHandleMod) HandleInCommit(cmsg *Commit) bool {
 	r := self.node.requestPool[string(cmsg.Digest)]
 	// requestType ...
 	block := base.DecodeBlock(r.Msg.Content)
@@ -94,7 +93,7 @@ func (self *RawPbftPbftExtraHandleMod) HandleinCommit(cmsg *Commit) bool {
 			SenderShardID:   self.node.ShardID,
 			ProposeTime:     r.ReqTime,
 			CommitTime:      time.Now(),
-			TxpoolSize:      (len(self.node.CurChain.TransactionPool.Queue)),
+			TxpoolSize:      len(self.node.CurChain.TransactionPool.Queue),
 		}
 		bByte, err := json.Marshal(bim)
 		if err != nil {

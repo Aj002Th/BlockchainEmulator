@@ -16,14 +16,12 @@ var DiskMetric uint64
 var diskSampleCnt int
 
 type Nothing = struct{}
-type Void = struct{}
 
-// 这个不用依赖信号，反正自力更生。
 func StartPs() {
 	// 创建统计进程
 	p, err := process.NewProcess(int32(os.Getpid()))
 	if err != nil {
-		panic("")
+		panic(err)
 	}
 	var stop atomic.Bool
 	sig := signal.GetSignalByName[Nothing]("OnEmulatorStop")
@@ -62,13 +60,4 @@ func StartPs() {
 		}
 	}()
 
-}
-
-func check(stop chan Nothing) bool {
-	select {
-	case <-stop:
-		return true
-	default:
-		return false
-	}
 }

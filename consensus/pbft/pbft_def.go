@@ -18,7 +18,7 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/storage/stateStorage"
 )
 
-type PbftConsensusNode struct {
+type ConsensusNode struct {
 	// the local config about pbft
 	RunningNode *Node  // the node information
 	ShardID     uint64 // denote the ID of the shard (or pbft), only one pbft consensus in a shard
@@ -59,9 +59,6 @@ type PbftConsensusNode struct {
 
 	// logger
 	pl *misc.PbftLog
-	// tcp control
-	// tcpln       net.Listener
-	tcpPoolLock sync.Mutex
 
 	// to handle the message in the pbft
 	ihm ExtraOpInConsensus
@@ -71,8 +68,8 @@ type PbftConsensusNode struct {
 }
 
 // NewPbftNode generate a pbft consensus for a node
-func NewPbftNode(nodeID uint64, pcc *chain.Config) *PbftConsensusNode {
-	self := new(PbftConsensusNode)
+func NewPbftNode(nodeID uint64, pcc *chain.Config) *ConsensusNode {
+	self := new(ConsensusNode)
 	self.ipNodeTable = params.IPmapNodeTable
 	self.nodeNums = pcc.NodesNum
 	self.ShardID = 0
@@ -131,7 +128,7 @@ func dispatchHelper[T any](content []byte, handler func(*T)) {
 
 // handle the raw message, send it to corresponded interfaces
 // 还没反序列化。根据他的奇葩协议要做派发。不是在这里反序列化的。
-func (self *PbftConsensusNode) dispatchMessage(msg []byte) {
+func (self *ConsensusNode) dispatchMessage(msg []byte) {
 	msgType, content := SplitMessage(msg)
 	if len(content) > 2000 {
 		self.pl.Printf("Received a %v: %v\n", msgType, string(content[:2000]))
@@ -155,34 +152,7 @@ func (self *PbftConsensusNode) dispatchMessage(msg []byte) {
 	}
 }
 
-// func (self *PbftConsensusNode) startSession(con net.Conn) {
-// 	defer con.Close()
-// 	clientReader := bufio.NewReader(con)
-// 	for {
-// 		clientRequest, err := clientReader.ReadBytes('\n') // 读到反斜杠n。
-// 		network.Tcp.UpdateMetric(0, len(clientRequest))
-// 		self.stopLock.Lock()
-// 		stopVal := self.stop
-// 		self.stopLock.Unlock()
-// 		if stopVal {
-// 			return
-// 		}
-// 		switch err { // 没错误那就带锁地handleMessage
-// 		case nil:
-// 			self.tcpPoolLock.Lock()
-// 			self.dispatchMessage(clientRequest)
-// 			self.tcpPoolLock.Unlock()
-// 		case io.EOF:
-// 			log.Println("client closed the connection by terminating the process")
-// 			return
-// 		default:
-// 			log.Printf("error: %v\n", err)
-// 			return
-// 		}
-// 	}
-// }
-
-func (self *PbftConsensusNode) Run() {
+func (self *ConsensusNode) Run() {
 	meter.NodeSideStart()
 	if self.NodeID == 0 {
 		// 主节点需要负责从 txPool 中取出 tx 来处理
@@ -202,25 +172,11 @@ func (self *PbftConsensusNode) Run() {
 			}
 		}()
 	}
-	self.doAccept()
+	self.serve()
 }
 
 // 起一个TCP Server端。
-func (self *PbftConsensusNode) doAccept() {
-	// ln, err := net.Listen("tcp", self.RunningNode.IPaddr)
-	// self.tcpln = ln
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
-	// for {
-	// 	conn, err := self.tcpln.Accept()
-	// 	if err != nil {
-	// 		return
-	// 	}
-
-	// 	self.pl.Printf("Accepted the: %v. Now Start a session.\n", conn.RemoteAddr())
-	// 	go self.startSession(conn)
-	// }
+func (self *ConsensusNode) serve() {
 	ch := network.Tcp.Serve(self.RunningNode.IPaddr)
 	for {
 		clientRequest, ok := <-ch
@@ -233,7 +189,7 @@ func (self *PbftConsensusNode) doAccept() {
 }
 
 // when received stop
-func (self *PbftConsensusNode) setStopAndCleanUp() {
+func (self *ConsensusNode) setStopAndCleanUp() {
 	self.pl.Println("handling stop message")
 	self.stopLock.Lock()
 	self.stop = true
@@ -247,7 +203,6 @@ func (self *PbftConsensusNode) setStopAndCleanUp() {
 	GatherAndSend(int(self.NodeID), self.pl)
 
 	network.Tcp.Close()
-	// self.tcpln.Close()
 	self.CurChain.CloseBlockChain()
 	self.pl.Println("handled stop message")
 }
@@ -259,7 +214,7 @@ func GatherAndSend(nodeID int, pl *log.Logger) {
 		DiskMetric:    meter.DiskMetric,
 		TotalUpload:   meter.TotalUpload,
 		TotalDownload: meter.TotalDownload,
-		TotalTime:     int64(time.Since(meter.Time_Begin)),
+		TotalTime:     int64(time.Since(meter.TimeBegin)),
 		NodeId:        nodeID,
 	}
 	m, err := json.Marshal(b)
@@ -270,11 +225,11 @@ func GatherAndSend(nodeID int, pl *log.Logger) {
 }
 
 // this func is only invoked by main node
-func (self *PbftConsensusNode) doPropose() {
+func (self *ConsensusNode) doPropose() {
 	if self.view != self.NodeID { // 保证只能主节点调用。否则返回。
 		return
 	}
-	for { // 这个傻逼节点。for循环一直在do Propose。
+	for { // for循环一直在do Propose。
 		select { // 判断是否停止的那个信号量。
 		case <-self.pStop:
 			self.pl.Printf("S%dN%d stop...\n", self.ShardID, self.NodeID)
@@ -283,11 +238,12 @@ func (self *PbftConsensusNode) doPropose() {
 		}
 		time.Sleep(time.Duration(int64(params.BlockInterval)) * time.Millisecond) // 不停睡觉-propose循环。（发PrePrepare）
 
-		self.sequenceLock.Lock() // 他这个设计有毒的。他拿锁当信号量用。Mutex不是有假唤醒什么的么，不能这么用的。。。。。醉了。。。。
+		self.sequenceLock.Lock()
 		self.pl.Printf("S%dN%d get sequenceLock locked, now trying to propose...\n", self.ShardID, self.NodeID)
+
 		// propose
 		// implement interface to generate propose
-		_, r := self.ihm.HandleinPropose()
+		_, r := self.ihm.HandleInPropose()
 
 		digest := getDigest(r)
 		self.requestPool[string(digest)] = r
@@ -299,13 +255,12 @@ func (self *PbftConsensusNode) doPropose() {
 			SeqID:      self.sequenceID,
 		}
 		self.height2Digest[self.sequenceID] = string(digest)
+
 		// marshal and broadcast
 		ppbyte, err := json.Marshal(ppmsg)
 		if err != nil {
 			log.Panic()
 		}
-		// msg_send := MergeMessage(CPrePrepare, ppbyte)
-		// network.Tcp.Broadcast(self.RunningNode.IPaddr, self.getNeighborNodes(), msg_send)
 		MergeAndBroadcast(CPrePrepare, ppbyte, self.RunningNode.IPaddr, self.getNeighborNodes(), self.pl)
 	}
 }

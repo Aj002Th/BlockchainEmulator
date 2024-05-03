@@ -2,13 +2,13 @@ package pbft
 
 type ExtraOpInConsensus interface {
 	// mining / message generation
-	HandleinPropose() (bool, *Request)
+	HandleInPropose() (bool, *Request)
 	// checking
-	HandleinPrePrepare(*PrePrepare) bool
+	HandleInPrePrepare(*PrePrepare) bool
 	// nothing necessary
-	HandleinPrepare(*Prepare) bool
+	HandleInPrepare(*Prepare) bool
 	// confirming
-	HandleinCommit(*Commit) bool
+	HandleInCommit(*Commit) bool
 }
 
 type OpInterShards interface {

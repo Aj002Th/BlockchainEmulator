@@ -27,12 +27,12 @@ func NewSupervisorLog() *SupervisorLog {
 var DebugLog *log.Logger
 
 func NewLogger1() *log.Logger {
-	dirpath := params.LogWritePath
-	err := os.MkdirAll(dirpath, os.ModePerm)
+	dirPath := params.LogWritePath
+	err := os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {
-		log.Println(dirpath)
+		log.Println(dirPath)
 		log.Panic(err)
 	}
-	filePath := dirpath + "/debug.log"
+	filePath := dirPath + "/debug.log"
 	return logger.NewLogger(filePath, "debug")
 }

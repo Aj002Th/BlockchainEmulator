@@ -59,15 +59,20 @@ if ($userInput -like "N*") {
 for ($i = 1; $i -lt $N; $i++) {
     # Execute the command (replace "print n" with your desired command)
     Write-Host "Executing command $i"
-    start cmd ("/k .\blockchainEmulator.exe -n $i")
+    Start-Process cmd ("/k .\blockchainEmulator.exe -n $i")
     # Invoke the command here
 }
 
 Write-Host "启动Supervisor"
 
-start cmd ("/k .\blockchainEmulator.exe -c -f -i $FileInput")
+if($FileInput){
+    Start-Process cmd ("/k .\blockchainEmulator.exe -c -f -i $FileInput")
+}else{
+    Start-Process cmd ("/k .\blockchainEmulator.exe -c -f")
+}
+
 
 Write-Host "启动主节点"
-start cmd ("/k .\blockchainEmulator.exe -n 0")
+Start-Process cmd ("/k .\blockchainEmulator.exe -n 0")
 
 Write-Host "已启动若干节点"

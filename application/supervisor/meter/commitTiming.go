@@ -7,26 +7,25 @@ import (
 )
 
 // 包括TPS，TCL那些
+var mTCL, mAvgTPS, mPCL, mBlockNumCount, mTxNumCount measure.MeasureModule
 
-var m1, m2, m3, m4, m6 measure.MeasureModule
-
-// 在sup端计算的时候用。
+// CommitFeed 在sup端计算的时候用。
 func CommitFeed(bim *pbft.BlockInfoMsg) {
-	m1.UpdateMeasureRecord(bim)
-	m2.UpdateMeasureRecord(bim)
-	m3.UpdateMeasureRecord(bim)
-	m4.UpdateMeasureRecord(bim)
-	m6.UpdateMeasureRecord(bim)
+	mTCL.UpdateMeasureRecord(bim)
+	mAvgTPS.UpdateMeasureRecord(bim)
+	mPCL.UpdateMeasureRecord(bim)
+	mBlockNumCount.UpdateMeasureRecord(bim)
+	mTxNumCount.UpdateMeasureRecord(bim)
 }
 
 func StartCommitRelate() []*measure.MeasureModule {
-	m1 = measure.NewTestModule_TCL_Pbft()
-	m2 = measure.NewTestModule_avgTPS_Pbft()
-	m3 = measure.NewPCL()
-	m4 = measure.NewBlockNumCount()
-	m6 = measure.NewTestTxNumCount_Pbft()
+	mTCL = measure.NewTCL()
+	mAvgTPS = measure.NewAvgTPS()
+	mPCL = measure.NewPCL()
+	mBlockNumCount = measure.NewBlockNumCount()
+	mTxNumCount = measure.NewTxNumCount()
 
 	sig := signal.GetSignalByName[*pbft.BlockInfoMsg]("OnBimReached")
 	sig.Connect(CommitFeed)
-	return []*measure.MeasureModule{&m1, &m2, &m3, &m4, &m6}
+	return []*measure.MeasureModule{&mTCL, &mAvgTPS, &mPCL, &mBlockNumCount, &mTxNumCount}
 }

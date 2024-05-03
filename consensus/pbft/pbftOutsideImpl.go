@@ -9,7 +9,7 @@ import (
 // This module used in the blockChain using transaction pbfting mechanism.
 // "Raw" means that the pbft only make block consensus.
 type RawPbftOutsideModule struct {
-	node *PbftConsensusNode
+	node *ConsensusNode
 }
 
 // HandleMessageOutsidePBFT msgType canbe defined in message

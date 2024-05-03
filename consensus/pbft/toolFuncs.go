@@ -8,7 +8,7 @@ import (
 
 // set 2d map, only for pbft maps, if the first parameter is true, then set the cntPrepareConfirm map,
 // otherwise, cntCommitConfirm map will be set
-func (self *PbftConsensusNode) set2DMap(isPrePareConfirm bool, key string, val *Node) {
+func (self *ConsensusNode) set2DMap(isPrePareConfirm bool, key string, val *Node) {
 	if isPrePareConfirm {
 		if _, ok := self.cntPrepareConfirm[key]; !ok {
 			self.cntPrepareConfirm[key] = make(map[*Node]bool)
@@ -23,7 +23,7 @@ func (self *PbftConsensusNode) set2DMap(isPrePareConfirm bool, key string, val *
 }
 
 // get neighbor nodes in a shard
-func (self *PbftConsensusNode) getNeighborNodes() []string {
+func (self *ConsensusNode) getNeighborNodes() []string {
 	receiverNodes := make([]string, 0)
 	for _, ip := range self.ipNodeTable[self.ShardID] {
 		receiverNodes = append(receiverNodes, ip)

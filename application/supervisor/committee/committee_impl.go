@@ -125,7 +125,7 @@ func (rthm *PbftCommitteeModule) MsgSendingControl() {
 			rthm.txSending(txList)
 			// reset the variants about tx sending
 			txList = make([]*base.Transaction, 0) // 之后txList又恢复，从头再来。
-			rthm.Ss.StopGap_Reset()               // StopGap也要Reset。
+			rthm.Ss.StopGapReset()                // StopGap也要Reset。
 		}
 
 		if rthm.nowDataNum == rthm.dataTotalNum {
@@ -134,10 +134,7 @@ func (rthm *PbftCommitteeModule) MsgSendingControl() {
 	}
 }
 
-// HandleBlockInfo
-// Sup会在HandleBlockInfos里调
-// no operation here
 func (rthm *PbftCommitteeModule) HandleBlockInfo(b *pbft.BlockInfoMsg) {
-	// supervisor_log.DebugLog.Println("module HandleBlockInfo")
+	supervisor_log.DebugLog.Println("module HandleBlockInfo")
 	// NOTHING TO DO
 }

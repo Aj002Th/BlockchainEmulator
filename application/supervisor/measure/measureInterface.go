@@ -10,13 +10,13 @@ import (
 func GetByName(name string) MeasureModule {
 	switch name {
 	case "TPS_Pbft":
-		return NewTestModule_avgTPS_Pbft()
+		return NewAvgTPS()
 	case "TCL_Pbft":
-		return NewTestModule_TCL_Pbft()
+		return NewTCL()
 	case "CrossTxRate_Pbft":
 		return NewTestCrossTxRate_Pbft()
 	case "TxNumberCount_Pbft":
-		return NewTestTxNumCount_Pbft()
+		return NewTxNumCount()
 	case "BlockNumCount":
 		return NewBlockNumCount()
 	default:

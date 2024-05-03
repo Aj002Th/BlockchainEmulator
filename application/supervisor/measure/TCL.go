@@ -8,26 +8,26 @@ import (
 )
 
 // to test average Transaction_Confirm_Latency (TCL)  in this system
-type TestModule_TCL_Pbft struct {
+type TCL struct {
 	epochID           int       // 其实这应该叫epochCnt，随着bim到来，这个值是计数递增的。
 	totTxLatencyEpoch []float64 // record the Transaction_Confirm_Latency in each epoch
 	txNum             []float64 // record the txNumber in each epoch
 }
 
-func NewTestModule_TCL_Pbft() *TestModule_TCL_Pbft {
-	return &TestModule_TCL_Pbft{
+func NewTCL() *TCL {
+	return &TCL{
 		epochID:           -1,
 		totTxLatencyEpoch: make([]float64, 0),
 		txNum:             make([]float64, 0),
 	}
 }
 
-func (tml *TestModule_TCL_Pbft) OutputMetricName() string {
+func (tml *TCL) OutputMetricName() string {
 	return "Transaction_Confirm_Latency"
 }
 
-// modified latency
-func (tml *TestModule_TCL_Pbft) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
+// UpdateMeasureRecord modified latency
+func (tml *TCL) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	if b.BlockBodyLength == 0 { // empty block
 		return
 	}
@@ -51,7 +51,7 @@ func (tml *TestModule_TCL_Pbft) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	}
 }
 
-func (tml *TestModule_TCL_Pbft) OutputRecord() (perEpochLatency []float64, totLatency float64) {
+func (tml *TCL) OutputRecord() (perEpochLatency []float64, totLatency float64) {
 	perEpochLatency = make([]float64, 0)
 	latencySum := 0.0
 	totTxNum := 0.0
@@ -64,7 +64,7 @@ func (tml *TestModule_TCL_Pbft) OutputRecord() (perEpochLatency []float64, totLa
 	return
 }
 
-func (tml *TestModule_TCL_Pbft) GetDesc() metrics.Desc {
+func (tml *TCL) GetDesc() metrics.Desc {
 	b := metrics.NewDescBuilder("交易提交延迟(TCL)", "交易从到达到提交的延迟，即Tx Confirm Latency")
 
 	var perEpochLatency []float64

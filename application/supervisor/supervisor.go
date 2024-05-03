@@ -80,10 +80,10 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 	// StopSignal check
 	if m.BlockBodyLength == 0 {
 		supervisor_log.DebugLog.Println("BodyLength == 0, Inc")
-		d.Ss.StopGap_Inc()
+		d.Ss.StopGapInc()
 	} else {
 		supervisor_log.DebugLog.Println("BodyLength != 0, Reset")
-		d.Ss.StopGap_Reset()
+		d.Ss.StopGapReset()
 	}
 
 	supervisor_log.DebugLog.Printf("received from shard %d in epoch %d.\n", m.SenderShardID, m.Epoch)

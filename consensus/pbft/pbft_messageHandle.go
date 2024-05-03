@@ -7,7 +7,7 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/logger"
 )
 
-func (self *PbftConsensusNode) handlePrePrepare(ppmsg *PrePrepare) {
+func (self *ConsensusNode) handlePrePrepare(ppmsg *PrePrepare) {
 	self.RunningNode.PrintNode()
 	logger.Println("received the PrePrepare ...")
 	// decode the message
@@ -20,7 +20,7 @@ func (self *PbftConsensusNode) handlePrePrepare(ppmsg *PrePrepare) {
 		self.pl.Printf("S%dN%d : the Sequence id is not consistent, so refuse to prepare. \n", self.ShardID, self.NodeID)
 	} else {
 		// do your operation in this interface
-		flag = self.ihm.HandleinPrePrepare(ppmsg)
+		flag = self.ihm.HandleInPrePrepare(ppmsg)
 		self.requestPool[string(getDigest(ppmsg.RequestMsg))] = ppmsg.RequestMsg
 		self.height2Digest[ppmsg.SeqID] = string(getDigest(ppmsg.RequestMsg))
 	}
@@ -35,15 +35,13 @@ func (self *PbftConsensusNode) handlePrePrepare(ppmsg *PrePrepare) {
 		if err != nil {
 			log.Panic()
 		}
+
 		// broadcast
-		// msg_send := MergeMessage(CPrepare, prepareByte)
-		// network.Tcp.Broadcast(self.RunningNode.IPaddr, self.getNeighborNodes(), msg_send)
-		// self.pl.Printf("S%dN%d : has broadcast the prepare message \n", self.ShardID, self.NodeID)
 		MergeAndBroadcast(CPrepare, prepareByte, self.RunningNode.IPaddr, self.getNeighborNodes(), self.pl)
 	}
 }
 
-func (self *PbftConsensusNode) handlePrepare(pmsg *Prepare) {
+func (self *ConsensusNode) handlePrepare(pmsg *Prepare) {
 	self.pl.Printf("S%dN%d : received the Prepare ...\n", self.ShardID, self.NodeID)
 
 	if _, ok := self.requestPool[string(pmsg.Digest)]; !ok {
@@ -52,13 +50,14 @@ func (self *PbftConsensusNode) handlePrepare(pmsg *Prepare) {
 		self.pl.Printf("S%dN%d : inconsistent sequence ID, refuse to commit\n", self.ShardID, self.NodeID)
 	} else {
 		// if needed more operations, implement interfaces
-		self.ihm.HandleinPrepare(pmsg)
+		self.ihm.HandleInPrepare(pmsg)
 
 		self.set2DMap(true, string(pmsg.Digest), pmsg.SenderNode)
 		cnt := 0
 		for range self.cntPrepareConfirm[string(pmsg.Digest)] {
 			cnt++
 		}
+
 		// the main node will not send the prepare message
 		specifiedcnt := int(2 * self.maliciousNums)
 		if self.NodeID != self.view {
@@ -86,7 +85,7 @@ func (self *PbftConsensusNode) handlePrepare(pmsg *Prepare) {
 	}
 }
 
-func (self *PbftConsensusNode) handleCommit(cmsg *Commit) {
+func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 	// decode the message
 	self.pl.Printf("S%dN%d received the Commit from ...%d\n", self.ShardID, self.NodeID, cmsg.SenderNode.NodeID)
 	self.set2DMap(false, string(cmsg.Digest), cmsg.SenderNode)
@@ -126,7 +125,7 @@ func (self *PbftConsensusNode) handleCommit(cmsg *Commit) {
 			MergeAndSend(CRequestOldrequest, bromyte, orequest.ServerNode.IPaddr, self.pl)
 		} else {
 			// implement interface
-			self.ihm.HandleinCommit(cmsg)
+			self.ihm.HandleInCommit(cmsg)
 			self.isReply[string(cmsg.Digest)] = true
 			self.pl.Printf("S%dN%d: this round of pbft %d is end \n", self.ShardID, self.NodeID, self.sequenceID)
 			self.sequenceID += 1
