@@ -12,7 +12,7 @@ $prefix = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
 
 $Env:BCEM_OUTPUT_PREFIX=$prefix
 
-Write-Host "现在准备启动若干个节点。输出前缀是时间戳 \"$prefix\"" -ForegroundColor White -BackgroundColor Green
+Write-Host "现在准备启动若干个节点。输出前缀是时间戳 `"$prefix`"" -ForegroundColor White -BackgroundColor Green
 Write-Host ""
 
 # 检测文件是否存在
