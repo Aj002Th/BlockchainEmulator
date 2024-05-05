@@ -1,18 +1,6 @@
-param (
-    [int]$N = 3, # Parameter to specify the number of times to execute the command
-    [string]$FileInput
+﻿param (
+    [int]$N = 3 # Parameter to specify the number of times to execute the command
 )
-
-if( -not ($PSVersionTable.PSVersion.Major -ge 7 )){
-    Write-Host "发现错误：" -ForegroundColor White -BackgroundColor Red
-    Write-Host ""
-    Write-Host "Powershell版本要求大于7.0。请先升级你的版本。程序现在退出。" -ForegroundColor White -BackgroundColor Red
-    Write-Host ""
-    exit
-    Write-Output "After Exit"
-}
-
-
 
 # Check if $N is a valid positive integer
 if ($N -le 2) {
@@ -24,7 +12,7 @@ $prefix = Get-Date -Format "MM-dd-yyyy-HH-mm-ss"
 
 $Env:BCEM_OUTPUT_PREFIX=$prefix
 
-Write-Host "现在准备启动若干个节点。输出前缀是时间戳。: $prefix" -ForegroundColor White -BackgroundColor Green
+Write-Host "现在准备启动若干个节点。输出前缀是时间戳 \"$prefix\"" -ForegroundColor White -BackgroundColor Green
 Write-Host ""
 
 # 检测文件是否存在
@@ -59,20 +47,14 @@ if ($userInput -like "N*") {
 for ($i = 1; $i -lt $N; $i++) {
     # Execute the command (replace "print n" with your desired command)
     Write-Host "Executing command $i"
-    Start-Process cmd ("/k .\blockchainEmulator.exe -n $i")
+    start cmd "/k .\blockchainEmulator.exe -n $i"
     # Invoke the command here
 }
 
 Write-Host "启动Supervisor"
-
-if($FileInput){
-    Start-Process cmd ("/k .\blockchainEmulator.exe -c -f -i $FileInput")
-}else{
-    Start-Process cmd ("/k .\blockchainEmulator.exe -c -f")
-}
-
+start cmd '/k .\blockchainEmulator.exe -c -f'
 
 Write-Host "启动主节点"
-Start-Process cmd ("/k .\blockchainEmulator.exe -n 0")
+start cmd '/k .\blockchainEmulator.exe -n 0'
 
 Write-Host "已启动若干节点"
