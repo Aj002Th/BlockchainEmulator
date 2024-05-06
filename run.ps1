@@ -10,7 +10,9 @@
 )
 
 if ($Help) {
-    Write-Host "The Blockchain Emulator (BCEM) is a tool for testing blockchain applications." -ForegroundColor White -BackgroundColor Green
+    Write-Host "启动脚本帮助"  -ForegroundColor White -BackgroundColor Green
+    Write-Host ""
+    Write-Host "The Blockchain Emulator (BCEM) is a tool for testing blockchain applications."
     Write-Host ""
     Write-Host "Usage: run.ps1 [-N <number>] [-Args <arguments>] [-Help]"
     Write-Host ""
@@ -18,6 +20,9 @@ if ($Help) {
     Write-Host "  -N <number>      Number of times to execute the command (default: 3)"
     Write-Host " -Args <arguments> Arguments to pass to the command"  
     Write-Host ""
+    Write-Host "节点程序参数帮助"  -ForegroundColor White -BackgroundColor Green
+    Write-Host ""
+    .\blockchainEmulator.exe --help
     exit 0
 }
 
