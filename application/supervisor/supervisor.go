@@ -67,7 +67,25 @@ func NewSupervisor() *Supervisor {
 		d.waitMasterReady <- struct{}{}
 	})
 
+	d.printParams()
+
 	return d
+}
+
+func (d *Supervisor) printParams() {
+
+	d.sl.Slog.Printf("params.NodeNum               = %v\n", params.NodeNum)
+	d.sl.Slog.Printf("params.BlockInterval         = %v\n", params.BlockInterval)
+	d.sl.Slog.Printf("params.MaxBlockSizeGlobal    = %v\n", params.MaxBlockSizeGlobal)
+	d.sl.Slog.Printf("params.InjectSpeed           = %v\n", params.InjectSpeed)
+	d.sl.Slog.Printf("params.TotalDataSize         = %v\n", params.TotalDataSize)
+	d.sl.Slog.Printf("params.BatchSize             = %v\n", params.BatchSize)
+	d.sl.Slog.Printf("params.LogWritePath          = %v\n", params.LogWritePath)
+	d.sl.Slog.Printf("params.DataWritePath         = %v\n", params.DataWritePath)
+	d.sl.Slog.Printf("params.RecordWritePath       = %v\n", params.RecordWritePath)
+	d.sl.Slog.Printf("params.SupervisorEndpoint    = %v\n", params.SupervisorEndpoint)
+	d.sl.Slog.Printf("params.FileInput             = %v\n", params.FileInput)
+
 }
 
 // 根据Body长度决定是否Inc.
