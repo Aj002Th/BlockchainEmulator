@@ -1,6 +1,25 @@
 ﻿param (
-    [int]$N = 3 # Parameter to specify the number of times to execute the command
+    [Parameter(Mandatory=$false)]
+    [int]$N = 3, # Parameter to specify the number of times to execute the command
+
+    [Parameter(Mandatory=$false)]
+    [string] $Args, # Parameter to specify the arguments to pass to the command
+
+    [Parameter(Mandatory=$false)]
+    [switch] $Help # Parameter to specify the arguments to pass to the command
 )
+
+if ($Help) {
+    Write-Host "The Blockchain Emulator (BCEM) is a tool for testing blockchain applications." -ForegroundColor White -BackgroundColor Green
+    Write-Host ""
+    Write-Host "Usage: run.ps1 [-N <number>] [-Args <arguments>] [-Help]"
+    Write-Host ""
+    Write-Host "Options:"
+    Write-Host "  -N <number>      Number of times to execute the command (default: 3)"
+    Write-Host " -Args <arguments> Arguments to pass to the command"  
+    Write-Host ""
+    exit 0
+}
 
 # Check if $N is a valid positive integer
 if ($N -le 2) {
@@ -46,15 +65,17 @@ if ($userInput -like "N*") {
 # Loop to execute the command N times
 for ($i = 1; $i -lt $N; $i++) {
     # Execute the command (replace "print n" with your desired command)
-    Write-Host "Executing command $i"
-    start cmd "/k .\blockchainEmulator.exe -n $i"
+    Write-Host "启动PBFT节点$i"
+    start cmd ("/k .\blockchainEmulator.exe -n $i" + " "+ $Args)
     # Invoke the command here
 }
 
 Write-Host "启动Supervisor"
-start cmd '/k .\blockchainEmulator.exe -c -f'
+start cmd ('/k .\blockchainEmulator.exe -c -f' + " "+ $Args)
 
-Write-Host "启动主节点"
-start cmd '/k .\blockchainEmulator.exe -n 0'
+Write-Host "启动PBFT主节点"
+# Write-Host ('/k .\blockchainEmulator.exe -n 0' + " "+$Args)
+# Write-Host $Args
+start cmd ('/k .\blockchainEmulator.exe -n 0' + " "+ $Args)
 
 Write-Host "已启动若干节点"
