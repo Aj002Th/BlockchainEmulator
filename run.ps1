@@ -51,7 +51,7 @@ $lastModified = (Get-Item ".\blockchainEmulator.exe").LastWriteTime
 $timeDifference = New-TimeSpan -Start $lastModified -End (Get-Date)
 
 # 打印输出时间间隔
-Write-Host "TIPS：这个二进制副本是在xx时候生成的，距离现在已经过去 $($timeDifference.Hours) 小时 $($timeDifference.Minutes) 分钟 $($timeDifference.Seconds) 秒。"
+Write-Host "TIPS：这个二进制副本生成的时候，距离现在已经过去 $($timeDifference.Hours) 小时 $($timeDifference.Minutes) 分钟 $($timeDifference.Seconds) 秒。"
 Write-Host ""
 
 # 检测用户输入是否以N开头，如果是则退出
