@@ -1,6 +1,6 @@
 ﻿param (
     [Parameter(Mandatory=$true)]
-    [int]$Select = 3 # Parameter to specify the number of times to execute the command
+    [int]$Select # Parameter to specify the number of times to execute the command
 )
 
 switch ($Select){
