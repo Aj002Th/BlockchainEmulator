@@ -1,7 +1,7 @@
 package boot
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"path"
 
@@ -10,9 +10,25 @@ import (
 )
 
 type Args struct {
-	nodeID   int
-	isClient bool
-	frontend bool
+	nodeID        int
+	isClient      bool
+	frontend      bool
+	interpretArgs bool
+}
+
+func PrintCurrentArgs() {
+	fmt.Printf("The params-set will be:\n")
+	fmt.Printf("params.NodeNum               = %v\n", params.NodeNum)
+	fmt.Printf("params.BlockInterval         = %v\n", params.BlockInterval)
+	fmt.Printf("params.MaxBlockSizeGlobal    = %v\n", params.MaxBlockSizeGlobal)
+	fmt.Printf("params.InjectSpeed           = %v\n", params.InjectSpeed)
+	fmt.Printf("params.TotalDataSize         = %v\n", params.TotalDataSize)
+	fmt.Printf("params.BatchSize             = %v\n", params.BatchSize)
+	fmt.Printf("params.LogWritePath          = %v\n", params.LogWritePath)
+	fmt.Printf("params.DataWritePath         = %v\n", params.DataWritePath)
+	fmt.Printf("params.RecordWritePath       = %v\n", params.RecordWritePath)
+	fmt.Printf("params.SupervisorEndpoint    = %v\n", params.SupervisorEndpoint)
+	fmt.Printf("params.FileInput             = %v\n", params.FileInput)
 }
 
 // ParseAndBuildArg 旨在顺手把params里的值也设置了
@@ -22,6 +38,7 @@ func ParseAndBuildArg() Args {
 	pflag.IntVarP(&a.nodeID, "nodeID", "n", 0, "id of this node, for example, 0")
 	pflag.BoolVarP(&a.isClient, "client", "c", false, "whether this node is a client")
 	pflag.BoolVarP(&a.frontend, "frontend", "f", false, "whether open web GUI monitor frontend")
+	pflag.BoolVarP(&a.interpretArgs, "interpret", "", false, "whether interpret the currently set args")
 
 	// 参数注入
 	// todo: add shorthand
@@ -38,8 +55,6 @@ func ParseAndBuildArg() Args {
 	pflag.StringVarP(&params.FileInput, "FileInput", "i", "./BlockTransaction.csv", "the raw BlockTransaction data path")
 
 	pflag.Parse()
-
-	log.Default().Println("ParsePFlagHit")
 
 	prefix := os.Getenv("BCEM_OUTPUT_PREFIX")
 	if prefix == "" {

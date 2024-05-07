@@ -55,6 +55,11 @@ $lastModified = (Get-Item ".\blockchainEmulator.exe").LastWriteTime
 # 计算距离现在的时间间隔
 $timeDifference = New-TimeSpan -Start $lastModified -End (Get-Date)
 
+
+Write-Host "脚本正在获取解释的参数"
+Write-Host ""
+powershell .\blockchainEmulator.exe "--interpret -N $N $Args"
+
 # 打印输出时间间隔
 Write-Host "TIPS：这个二进制副本生成的时候，距离现在已经过去 $($timeDifference.Hours) 小时 $($timeDifference.Minutes) 分钟 $($timeDifference.Seconds) 秒。"
 Write-Host ""
