@@ -1,6 +1,6 @@
 ﻿param (
     [Parameter(Mandatory=$true)]
-    [int]$Select # Parameter to specify the number of times to execute the command
+    [int]$Select # 选择用哪一组预设值来启动模拟器。
 )
 
 switch ($Select){
