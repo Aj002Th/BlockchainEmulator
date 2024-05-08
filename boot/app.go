@@ -31,6 +31,13 @@ func NewApp(a Args) App {
 }
 
 func (self *App) Run() {
+
+	if self.args.interpretArgs {
+		fmt.Printf("指定参数后，系统全体参数打印如下：\n")
+		PrintCurrentArgs()
+		return
+	}
+
 	var f *os.File
 	var err error
 	if self.args.isClient {
