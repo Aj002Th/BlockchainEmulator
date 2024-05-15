@@ -76,7 +76,7 @@ if ($userInput -like "N*") {
 for ($i = 1; $i -lt $N; $i++) {
     # Execute the command (replace "print n" with your desired command)
     Write-Host "启动PBFT节点$i"
-    start cmd ("/k .\blockchainEmulator.exe -n $i" + " "+ $Args)
+    start cmd ("/k .\blockchainEmulator.exe -N $N -n $i" + " "+ $Args)
     # Invoke the command here
 }
 
@@ -86,6 +86,6 @@ start cmd ('/k .\blockchainEmulator.exe -c -f' + " "+ $Args)
 Write-Host "启动PBFT主节点"
 # Write-Host ('/k .\blockchainEmulator.exe -n 0' + " "+$Args)
 # Write-Host $Args
-start cmd ('/k .\blockchainEmulator.exe -n 0' + " "+ $Args)
+start cmd ("/k .\blockchainEmulator.exe -N $N -n 0" + " "+ $Args)
 
 Write-Host "已启动若干节点"
