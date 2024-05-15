@@ -75,13 +75,6 @@ type RequestOldMessage struct {
 	SenderNode     *Node
 }
 
-type SendOldMessage struct {
-	SeqStartHeight uint64
-	SeqEndHeight   uint64
-	OldRequest     []*Request
-	SenderNode     *Node
-}
-
 type InjectTxs struct {
 	Txs       []*base.Transaction
 	ToShardID uint64

@@ -60,7 +60,6 @@ func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 		// 到达InjectSpeed的时候就发一个InjectTxs给Node 0
 		// 同时清空队列列表。
 		if idx > 0 && (idx%params.InjectSpeed == 0 || idx == len(txlist)) {
-			// send to shard
 			it := pbft.InjectTxs{
 				Txs:       sendToShard[0],
 				ToShardID: 0,
@@ -69,7 +68,7 @@ func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 			if err != nil {
 				log.Panic(err)
 			}
-			pbft.MergeAndSend(pbft.CInject, itByte, rthm.nodeEndpointList[0][0], supervisor_log.DebugLog)
+			pbft.MergeAndSend(pbft.CInject, itByte, rthm.nodeEndpointList[0], supervisor_log.DebugLog)
 
 			sendToShard = make(map[uint64][]*base.Transaction)
 			time.Sleep(time.Second)
