@@ -24,11 +24,6 @@ type Desc struct {
 	Elems []DescElem `json:"elems"`
 }
 
-// // 为GetDesc提供便利。反正遵循这个框架。Go没有type alias所以只能这样
-// type Desc struct {
-// 	val []DescElem
-// }
-
 func DescDump(d Desc) []byte {
 	bs, err := json.Marshal(d)
 	if err != nil {

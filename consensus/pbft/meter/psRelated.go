@@ -38,7 +38,6 @@ func StartPs() {
 			if err != nil {
 				panic("Wrong")
 			}
-			// AvgCpuTime = t
 			AvgCpuPercent = (AvgCpuPercent*float64(cpuSampleCnt) + t) / (float64(cpuSampleCnt) + 1)
 			cpuSampleCnt++
 		}

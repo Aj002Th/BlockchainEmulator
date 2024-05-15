@@ -50,7 +50,7 @@ func (t *TcpCustomProtocolNetwork) Send(content []byte, addr string) {
 		if tcpConn, tcpOk := c.(*net.TCPConn); tcpOk {
 			// 判断连接是否存活
 			if err := tcpConn.SetKeepAlive(true); err != nil {
-				delete(t.connectionPool, addr) // Remove if not alive
+				delete(t.connectionPool, addr)
 				conn, err = net.Dial("tcp", addr)
 				if err != nil {
 					log.Println("Reconnect error", err)
@@ -69,7 +69,7 @@ func (t *TcpCustomProtocolNetwork) Send(content []byte, addr string) {
 			return
 		}
 		t.connectionPool[addr] = conn
-		go t.readFromConn(addr) // Start reading from new connection
+		go t.readFromConn(addr)
 	}
 
 	_, err = conn.Write(append(content, '\n'))
@@ -214,9 +214,3 @@ func readMessage(buffer *bytes.Buffer) (string, error) {
 	}
 	return string(message), nil
 }
-
-// // 创建一个TcpDial方便使用
-// var TcpDial = func() func(context []byte, addr string) {
-// 	t := NewTcpCustomProtocolNetwork()
-// 	return t.Send
-// }()

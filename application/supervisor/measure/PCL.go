@@ -7,11 +7,10 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 )
 
-// PCL to test average Transaction_Confirm_Latency (TCL)  in this system
 type PCL struct {
-	epochID           int       // 其实这应该叫epochCnt，随着bim到来，这个值是计数递增的。
-	totTxLatencyEpoch []float64 // record the Transaction_Confirm_Latency in each epoch
-	txNum             []float64 // record the txNumber in each epoch
+	epochID           int // epochCnt，随着bim到来，这个值是计数递增的。
+	totTxLatencyEpoch []float64
+	txNum             []float64
 }
 
 func NewPCL() *PCL {
@@ -26,9 +25,8 @@ func (tml *PCL) OutputMetricName() string {
 	return "Transaction_Confirm_Latency"
 }
 
-// UpdateMeasureRecord modified latency
 func (tml *PCL) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
-	if b.BlockBodyLength == 0 { // empty block
+	if b.BlockBodyLength == 0 {
 		return
 	}
 
@@ -36,7 +34,6 @@ func (tml *PCL) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	txs := b.ExcutedTxs
 	mTime := b.CommitTime
 
-	// extend
 	for tml.epochID < epochid {
 		tml.txNum = append(tml.txNum, 0)
 		tml.totTxLatencyEpoch = append(tml.totTxLatencyEpoch, 0)

@@ -90,7 +90,6 @@ func (self AsyncSignalImpl[DATA]) Disconnect(cb func(data DATA)) bool {
 func (self AsyncSignalImpl[DATA]) Emit(data DATA) {
 	for _, val := range self.outChannels {
 		supervisor_log.DebugLog.Printf("Signal %v, sending to channel %v\n", self.name, val.cd)
-		// val.cd <- data
 		ctx := context.Background()
 		self.lastEmit = promise.Then(self.lastEmit, ctx, func(int) (int, error) {
 			val.cd <- data

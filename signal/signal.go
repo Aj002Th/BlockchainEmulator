@@ -22,7 +22,7 @@ func GetGSig() map[string]interface{} {
 }
 
 func RegisterSig[DATA any](sig Signal[DATA]) {
-	name := (sig).GetName() // 什么逆天，为什么要加星花？
+	name := (sig).GetName()
 	GetGSig()[name] = sig
 }
 

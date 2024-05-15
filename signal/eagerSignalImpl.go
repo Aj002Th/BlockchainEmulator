@@ -1,6 +1,9 @@
-// 从https://github.com/vorot93/golang-signals/blob/master/signals.go直接摘来的，做了替换，直接以cb为索引。
-
 package signal
+
+// 这一代码受到了：
+// https://github.com/vorot93/golang-signals/blob/master/signals.go
+// 启发，并且做了改进，直接以cb为索引。
+// 以此实现了一个传统意义上的Signal。
 
 import (
 	"sync"

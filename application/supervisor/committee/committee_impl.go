@@ -18,13 +18,13 @@ import (
 )
 
 type PbftCommitteeModule struct {
-	csvPath      string
-	dataTotalNum int
-	nowDataNum   int
 	batchDataNum int
+	dataTotalNum int
 	IpNodeTable  map[uint64]map[uint64]string
 	sl           *supervisor_log.SupervisorLog
-	Ss           *signal.StopSignal // to control the stop message sending
+	Ss           *signal.StopSignal
+	csvPath      string
+	nowDataNum   int
 }
 
 func NewPbftCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *PbftCommitteeModule {
@@ -39,8 +39,6 @@ func NewPbftCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *signa
 	}
 }
 
-// transform, data to transaction
-// check whether it is a legal txs message. if so, read txs and put it into the txList
 func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 	if data[6] == "0" && data[7] == "0" && len(data[3]) > 16 && len(data[4]) > 16 && data[3] != data[4] {
 		val, ok := new(big.Int).SetString(data[8], 10)
@@ -55,7 +53,6 @@ func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 
 // 把这一批交易发送给pbft主节点。
 func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
-	// the txs will be sent
 	sendToShard := make(map[uint64][]*base.Transaction)
 
 	// 把每个tx按顺序推进去
@@ -89,7 +86,6 @@ func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 // MsgSendingControl
 // Sup开启的时候同步地调一次。
 // 把tx读出来然后用txSending发出去。
-// read transactions, the Number of the transactions is - batchDataNum
 func (rthm *PbftCommitteeModule) MsgSendingControl() {
 	supervisor_log.DebugLog.Println("in MsgSendingControl")
 
@@ -99,7 +95,7 @@ func (rthm *PbftCommitteeModule) MsgSendingControl() {
 	}
 	defer txFile.Close()
 	reader := csv.NewReader(txFile)
-	txList := make([]*base.Transaction, 0) // save the txs in this epoch (round)
+	txList := make([]*base.Transaction, 0)
 
 	// 将csv里每batchNum行转换成tx的列表，并且同步地发送出去。
 	for {
@@ -119,11 +115,9 @@ func (rthm *PbftCommitteeModule) MsgSendingControl() {
 			rthm.nowDataNum++
 		}
 
-		// re-shard condition, enough edges
 		if len(txList) == rthm.batchDataNum || rthm.nowDataNum == rthm.dataTotalNum {
 			// 当 txList 的长度满足batchDataNum，或者到达顶峰，那就要发送。
 			rthm.txSending(txList)
-			// reset the variants about tx sending
 			txList = make([]*base.Transaction, 0) // 之后txList又恢复，从头再来。
 			rthm.Ss.StopGapReset()                // StopGap也要Reset。
 		}

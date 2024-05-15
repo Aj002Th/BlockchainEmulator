@@ -20,7 +20,7 @@ func (self *ConsensusNode) handlePrePrepare(ppmsg *PrePrepare) {
 		self.pl.Printf("S%dN%d : the Sequence id is not consistent, so refuse to prepare. \n", self.ShardID, self.NodeID)
 	} else {
 		// do your operation in this interface
-		flag = self.ihm.HandleInPrePrepare(ppmsg)
+		flag = self.pbftImpl.doPreprepare(ppmsg)
 		self.requestPool[string(getDigest(ppmsg.RequestMsg))] = ppmsg.RequestMsg
 		self.height2Digest[ppmsg.SeqID] = string(getDigest(ppmsg.RequestMsg))
 	}
@@ -50,7 +50,7 @@ func (self *ConsensusNode) handlePrepare(pmsg *Prepare) {
 		self.pl.Printf("S%dN%d : inconsistent sequence ID, refuse to commit\n", self.ShardID, self.NodeID)
 	} else {
 		// if needed more operations, implement interfaces
-		self.ihm.HandleInPrepare(pmsg)
+		self.pbftImpl.doPrepare(pmsg)
 
 		self.set2DMap(true, string(pmsg.Digest), pmsg.SenderNode)
 		cnt := 0
@@ -125,7 +125,7 @@ func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 			MergeAndSend(CRequestOldrequest, bromyte, orequest.ServerNode.IPaddr, self.pl)
 		} else {
 			// implement interface
-			self.ihm.HandleInCommit(cmsg)
+			self.pbftImpl.doCommit(cmsg)
 			self.isReply[string(cmsg.Digest)] = true
 			self.pl.Printf("S%dN%d: this round of pbft %d is end \n", self.ShardID, self.NodeID, self.sequenceID)
 			self.sequenceID += 1
