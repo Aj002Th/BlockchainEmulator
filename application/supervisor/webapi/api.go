@@ -172,7 +172,7 @@ type PbftItem struct {
 }
 
 type Report struct {
-	PbftShardCsv   []PbftItem     `json:"pbftShardCsv"`
+	PbftPoolCsv    []PbftItem     `json:"pbftShardCsv"`
 	MeasureOutputs []metrics.Desc `json:"measureOutputs"`
 }
 
@@ -192,11 +192,11 @@ var Computing = func(Total int, Count int) Msg {
 	}
 }
 
-var Completed = func(PbftShardCsv []PbftItem, desc []metrics.Desc) Msg {
+var Completed = func(PbftPoolCsv []PbftItem, desc []metrics.Desc) Msg {
 	return Msg{
 		Type: "completed",
 		Content: Report{
-			PbftShardCsv:   PbftShardCsv,
+			PbftPoolCsv:    PbftPoolCsv,
 			MeasureOutputs: desc,
 		},
 	}

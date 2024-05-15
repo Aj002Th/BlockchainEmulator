@@ -106,9 +106,8 @@ func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 			self.askForLock.Lock()
 			// request the block
 			sn := &Node{
-				NodeID:  self.view,
-				ShardID: self.ShardID,
-				IPaddr:  self.nodeEndpointList[self.view],
+				NodeID: self.view,
+				IPaddr: self.nodeEndpointList[self.view],
 			}
 			orequest := RequestOldMessage{
 				SeqStartHeight: self.sequenceID + 1,
@@ -127,7 +126,7 @@ func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 			// implement interface
 			self.pbftImpl.doCommit(cmsg)
 			self.isReply[string(cmsg.Digest)] = true
-			self.pl.Printf("S%dN%d: this round of pbft %d is end \n", self.ShardID, self.NodeID, self.sequenceID)
+			self.pl.Printf("Node %d: this round of pbft %d is end \n", self.NodeID, self.sequenceID)
 			self.sequenceID += 1
 		}
 

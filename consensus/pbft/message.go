@@ -76,8 +76,7 @@ type RequestOldMessage struct {
 }
 
 type InjectTxs struct {
-	Txs       []*base.Transaction
-	ToShardID uint64
+	Txs []*base.Transaction
 }
 
 type BlockInfoMsg struct {
@@ -85,9 +84,8 @@ type BlockInfoMsg struct {
 	ExcutedTxs      []*base.Transaction
 	Epoch           int
 
-	ProposeTime   time.Time
-	CommitTime    time.Time
-	SenderShardID uint64
+	ProposeTime time.Time
+	CommitTime  time.Time
 
 	TxpoolSize int
 }
@@ -106,8 +104,7 @@ type KeepAliveMsg struct {
 }
 
 type SeqIDinfo struct {
-	SenderShardID uint64
-	SenderSeq     uint64
+	SenderSeq uint64
 }
 
 func MergeMessage(msgType MessageType, content []byte) []byte {

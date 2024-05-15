@@ -12,9 +12,9 @@ import (
 
 type PbftLog = log.Logger
 
-func NewPbftLog(sid, nid uint64) *PbftLog {
+func NewPbftLog(nid uint64) *PbftLog {
 	prefix := fmt.Sprintf("N%d: ", nid)
-	dirPath := params.LogWritePath + "/S" + strconv.Itoa(int(sid))
+	dirPath := params.LogWritePath
 	err := os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {
 		log.Panic(err)

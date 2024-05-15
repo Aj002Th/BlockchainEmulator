@@ -78,7 +78,6 @@ func (self *PbftImplSimpleImpl) doCommit(cmsg *Commit) bool {
 			BlockBodyLength: len(block.Body),
 			ExcutedTxs:      txExcuted,
 			Epoch:           0,
-			SenderShardID:   self.node.ShardID,
 			ProposeTime:     r.ReqTime,
 			CommitTime:      time.Now(),
 			TxpoolSize:      len(self.node.CurChain.TransactionPool.Queue),

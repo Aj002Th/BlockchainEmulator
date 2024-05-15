@@ -13,7 +13,6 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/supervisor_log"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
-	"github.com/Aj002Th/BlockchainEmulator/misc"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
@@ -53,7 +52,7 @@ func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 
 // 把这一批交易发送给pbft主节点。
 func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
-	sendToShard := make(map[uint64][]*base.Transaction)
+	txs := make([]*base.Transaction, 0)
 
 	// 把每个tx按顺序推进去
 	for idx := 0; idx <= len(txlist); idx++ {
@@ -61,8 +60,7 @@ func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 		// 同时清空队列列表。
 		if idx > 0 && (idx%params.InjectSpeed == 0 || idx == len(txlist)) {
 			it := pbft.InjectTxs{
-				Txs:       sendToShard[0],
-				ToShardID: 0,
+				Txs: txs,
 			}
 			itByte, err := json.Marshal(it)
 			if err != nil {
@@ -70,15 +68,14 @@ func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 			}
 			pbft.MergeAndSend(pbft.CInject, itByte, rthm.nodeEndpointList[0], supervisor_log.DebugLog)
 
-			sendToShard = make(map[uint64][]*base.Transaction)
+			txs = make([]*base.Transaction, 0)
 			time.Sleep(time.Second)
 		}
 		if idx == len(txlist) {
 			break
 		}
 		tx := txlist[idx]
-		senderSID := uint64(misc.Addr2Shard(tx.Sender))
-		sendToShard[senderSID] = append(sendToShard[senderSID], tx)
+		txs = append(txs, tx)
 	}
 }
 

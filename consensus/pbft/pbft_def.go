@@ -18,7 +18,6 @@ import (
 
 type ConsensusNode struct {
 	RunningNode *Node
-	ShardID     uint64
 	NodeID      uint64
 
 	CurChain *chain.BlockChain
@@ -58,7 +57,6 @@ func NewPbftNode(nodeID uint64, pcc *chain.Config) *ConsensusNode {
 	self := new(ConsensusNode)
 	self.nodeEndpointList = params.NodeEndpointList
 	self.nodeNums = pcc.NodesNum
-	self.ShardID = 0
 	self.NodeID = nodeID
 	self.pbftChainConfig = pcc
 
@@ -71,9 +69,8 @@ func NewPbftNode(nodeID uint64, pcc *chain.Config) *ConsensusNode {
 	}
 
 	self.RunningNode = &Node{
-		NodeID:  nodeID,
-		ShardID: 0,
-		IPaddr:  self.nodeEndpointList[nodeID],
+		NodeID: nodeID,
+		IPaddr: self.nodeEndpointList[nodeID],
 	}
 
 	self.stop = false
@@ -88,7 +85,7 @@ func NewPbftNode(nodeID uint64, pcc *chain.Config) *ConsensusNode {
 	self.maliciousNums = (self.nodeNums - 1) / 3
 	self.view = 0
 	self.seqIDMap = make(map[uint64]uint64)
-	self.pl = misc.NewPbftLog(0, nodeID)
+	self.pl = misc.NewPbftLog(nodeID)
 
 	base.NodeLog = self.pl
 
