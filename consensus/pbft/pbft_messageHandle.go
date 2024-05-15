@@ -108,7 +108,7 @@ func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 			sn := &Node{
 				NodeID:  self.view,
 				ShardID: self.ShardID,
-				IPaddr:  self.ipNodeTable[self.view],
+				IPaddr:  self.nodeEndpointList[self.view],
 			}
 			orequest := RequestOldMessage{
 				SeqStartHeight: self.sequenceID + 1,

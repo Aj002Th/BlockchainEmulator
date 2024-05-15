@@ -18,24 +18,24 @@ import (
 )
 
 type PbftCommitteeModule struct {
-	batchDataNum int
-	dataTotalNum int
-	IpNodeTable  map[uint64]string
-	sl           *supervisor_log.SupervisorLog
-	Ss           *signal.StopSignal
-	csvPath      string
-	nowDataNum   int
+	batchDataNum     int
+	dataTotalNum     int
+	nodeEndpointList map[uint64]string
+	sl               *supervisor_log.SupervisorLog
+	Ss               *signal.StopSignal
+	csvPath          string
+	nowDataNum       int
 }
 
 func NewPbftCommitteeModule(Ip_nodeTable map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *PbftCommitteeModule {
 	return &PbftCommitteeModule{
-		csvPath:      csvFilePath,
-		dataTotalNum: dataNum,
-		batchDataNum: batchNum,
-		nowDataNum:   0,
-		IpNodeTable:  Ip_nodeTable,
-		Ss:           Ss,
-		sl:           slog,
+		csvPath:          csvFilePath,
+		dataTotalNum:     dataNum,
+		batchDataNum:     batchNum,
+		nowDataNum:       0,
+		nodeEndpointList: Ip_nodeTable,
+		Ss:               Ss,
+		sl:               slog,
 	}
 }
 
@@ -69,7 +69,7 @@ func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
 			if err != nil {
 				log.Panic(err)
 			}
-			pbft.MergeAndSend(pbft.CInject, itByte, rthm.IpNodeTable[0][0], supervisor_log.DebugLog)
+			pbft.MergeAndSend(pbft.CInject, itByte, rthm.nodeEndpointList[0][0], supervisor_log.DebugLog)
 
 			sendToShard = make(map[uint64][]*base.Transaction)
 			time.Sleep(time.Second)

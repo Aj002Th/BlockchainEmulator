@@ -35,7 +35,7 @@ type Supervisor struct {
 	waitOnce        func()
 	waitMasterReady chan struct{}
 
-	IpNodeTable       map[uint64]string
+	nodeEndpointList  map[uint64]string
 	tcpLock           sync.Mutex
 	sl                *supervisor_log.SupervisorLog
 	Ss                *signal.StopSignal
@@ -46,11 +46,11 @@ type Supervisor struct {
 
 func NewSupervisor() *Supervisor {
 	d := &Supervisor{}
-	d.IpNodeTable = params.IPmapNodeTable
+	d.nodeEndpointList = params.NodeEndpointList
 	d.sl = supervisor_log.NewSupervisorLog()
 	d.Ss = signal.NewStopSignal(2 * int(1))
 	d.blockPostedSignal = sig.NewAsyncSignalImpl[pbft.BlockInfoMsg]("xx")
-	d.cmt = committee.NewPbftCommitteeModule(d.IpNodeTable, d.Ss, d.sl, params.FileInput, params.TotalDataSize, params.BatchSize)
+	d.cmt = committee.NewPbftCommitteeModule(d.nodeEndpointList, d.Ss, d.sl, params.FileInput, params.TotalDataSize, params.BatchSize)
 	d.txCompleteCount = 0
 
 	d.OnNodeStart = sig.GetSignalByName[struct{}]("OnNodeStart")
@@ -153,7 +153,7 @@ func (d *Supervisor) Run() {
 
 	for nid := uint64(0); nid < uint64(params.NodeNum); nid++ {
 		supervisor_log.DebugLog.Printf("Sending a %v: %v\n", pbft.CStop, string([]byte("this is a stop message~")))
-		pbft.MergeAndSend(pbft.CStop, []byte("this is a stop message~"), d.IpNodeTable[0][nid], supervisor_log.DebugLog)
+		pbft.MergeAndSend(pbft.CStop, []byte("this is a stop message~"), d.nodeEndpointList[nid], supervisor_log.DebugLog)
 	}
 
 	d.sl.Slog.Println("Supervisor: now Closing. Now Generate Metrics Outputs.")

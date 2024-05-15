@@ -22,7 +22,7 @@ func (self *ConsensusNode) set2DMap(isPrePareConfirm bool, key string, val *Node
 
 func (self *ConsensusNode) getNeighborNodes() []string {
 	receiverNodes := make([]string, 0)
-	for _, ip := range self.ipNodeTable {
+	for _, ip := range self.nodeEndpointList {
 		receiverNodes = append(receiverNodes, ip)
 	}
 	return receiverNodes
