@@ -116,6 +116,8 @@ func (self *ConsensusNode) dispatchMessage(msg []byte) {
 		self.pl.Printf("Received a %v: %v\n", msgType, string(content))
 	}
 	switch msgType {
+	case CInject:
+		self.handleInjectTx(content)
 	case CPrePrepare:
 		dispatchHelper(content, self.handlePrePrepare)
 	case CPrepare:
@@ -206,20 +208,20 @@ func (self *ConsensusNode) doPropose() {
 	for {
 		select {
 		case <-self.pStop:
-			self.pl.Printf("S%dN%d stop...\n", self.ShardID, self.NodeID)
+			self.pl.Printf("Node %d stop...\n", self.NodeID)
 			return
 		default:
 		}
 		time.Sleep(time.Duration(int64(params.BlockInterval)) * time.Millisecond)
 
 		self.sequenceLock.Lock()
-		self.pl.Printf("S%dN%d get sequenceLock locked, now trying to propose...\n", self.ShardID, self.NodeID)
+		self.pl.Printf("Node %d get sequenceLock locked, now trying to propose...\n", self.NodeID)
 
 		_, r := self.pbftImpl.doPropose()
 
 		digest := getDigest(r)
 		self.requestPool[string(digest)] = r
-		self.pl.Printf("S%dN%d put the request into the pool ...\n", self.ShardID, self.NodeID)
+		self.pl.Printf("Node %d put the request into the pool ...\n", self.NodeID)
 
 		ppmsg := PrePrepare{
 			RequestMsg: r,
@@ -234,6 +236,16 @@ func (self *ConsensusNode) doPropose() {
 		}
 		MergeAndBroadcast(CPrePrepare, ppbyte, self.RunningNode.IPaddr, self.getNeighborNodes(), self.pl)
 	}
+}
+
+func (self *ConsensusNode) handleInjectTx(content []byte) {
+	it := new(InjectTxs)
+	err := json.Unmarshal(content, it)
+	if err != nil {
+		log.Panic(err)
+	}
+	self.CurChain.TransactionPool.AddTransactionsToPool(it.Txs)
+	self.pl.Printf("Node %d : has handled injected txs msg, txs: %d \n", self.NodeID, len(it.Txs))
 }
 
 func MergeAndBroadcast(t MessageType, data []byte, from string, to []string, logger *log.Logger) {

@@ -30,10 +30,10 @@ func (self *PbftImplSimpleImpl) doPropose() (bool, *Request) {
 
 func (self *PbftImplSimpleImpl) doPreprepare(ppmsg *PrePrepare) bool {
 	if self.node.CurChain.IsValidBlock(base.DecodeBlock(ppmsg.RequestMsg.Msg.Content)) != nil {
-		self.node.pl.Printf("S%dN%d : not a valid block\n", self.node.ShardID, self.node.NodeID)
+		self.node.pl.Printf("Node %d : not a valid block\n", self.node.NodeID)
 		return false
 	}
-	self.node.pl.Printf("S%dN%d : the pre-prepare pbft is correct, putting it into the RequestPool. \n", self.node.ShardID, self.node.NodeID)
+	self.node.pl.Printf("Node %d : the pre-prepare pbft is correct, putting it into the RequestPool. \n", self.node.NodeID)
 	self.node.requestPool[string(ppmsg.Digest)] = ppmsg.RequestMsg
 
 	return true
@@ -61,13 +61,13 @@ func (self *PbftImplSimpleImpl) doCommit(cmsg *Commit) bool {
 	r := self.node.requestPool[string(cmsg.Digest)]
 
 	block := base.DecodeBlock(r.Msg.Content)
-	self.node.pl.Printf("S%dN%d : adding the block %d...now height = %d \n", self.node.ShardID, self.node.NodeID, block.Header.Number, self.node.CurChain.CurrentBlock.Header.Number)
+	self.node.pl.Printf("Node %d : adding the block %d...now height = %d \n", self.node.NodeID, block.Header.Number, self.node.CurChain.CurrentBlock.Header.Number)
 	self.node.CurChain.AddBlock(block)
-	self.node.pl.Printf("S%dN%d : added the block %d... \n", self.node.ShardID, self.node.NodeID, block.Header.Number)
+	self.node.pl.Printf("Node %d : added the block %d... \n", self.node.NodeID, block.Header.Number)
 	PrintBlockChain(self.node.CurChain)
 
 	if self.node.NodeID == self.node.view {
-		self.node.pl.Printf("S%dN%d : main node is trying to send pbft txs at height = %d \n", self.node.ShardID, self.node.NodeID, block.Header.Number)
+		self.node.pl.Printf("Node %d : main node is trying to send pbft txs at height = %d \n", self.node.NodeID, block.Header.Number)
 
 		txExcuted := make([]*base.Transaction, 0)
 		for _, tx := range block.Body {
@@ -88,7 +88,7 @@ func (self *PbftImplSimpleImpl) doCommit(cmsg *Commit) bool {
 			log.Panic()
 		}
 		MergeAndSend(CBlockInfo, bByte, params.SupervisorEndpoint, self.node.pl)
-		self.node.pl.Printf("S%dN%d : sended excuted txs\n", self.node.ShardID, self.node.NodeID)
+		self.node.pl.Printf("Node %d : sended excuted txs\n", self.node.NodeID)
 	}
 	return true
 }

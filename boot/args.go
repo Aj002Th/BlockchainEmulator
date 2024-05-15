@@ -42,7 +42,7 @@ func ParseAndBuildArg() Args {
 
 	// 参数注入
 	// todo: add shorthand
-	pflag.IntVarP(&params.NodeNum, "NodeNum", "N", 3, "indicate how many nodes of each shard are deployed")
+	pflag.IntVarP(&params.NodeNum, "NodeNum", "N", 3, "indicate how many nodes are deployed")
 	pflag.IntVarP(&params.BlockInterval, "BlockInterval", "", 5000, "generate new block interval")
 	pflag.IntVarP(&params.MaxBlockSizeGlobal, "MaxBlockSizeGlobal", "", 2000, "the block contains the maximum number of transactions")
 	pflag.IntVarP(&params.InjectSpeed, "InjectSpeed", "", 2000, "the transaction inject speed")

@@ -100,8 +100,6 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 		d.Ss.StopGapReset()
 	}
 
-	supervisor_log.DebugLog.Printf("received from shard %d in epoch %d.\n", m.SenderShardID, m.Epoch)
-
 	d.txCompleteCount += len(m.ExcutedTxs)
 	webapi.GlobalProxy.Enqueue(webapi.Computing(params.TotalDataSize, d.txCompleteCount))
 

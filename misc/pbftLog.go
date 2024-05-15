@@ -13,7 +13,7 @@ import (
 type PbftLog = log.Logger
 
 func NewPbftLog(sid, nid uint64) *PbftLog {
-	prefix := fmt.Sprintf("S%dN%d: ", sid, nid)
+	prefix := fmt.Sprintf("N%d: ", nid)
 	dirPath := params.LogWritePath + "/S" + strconv.Itoa(int(sid))
 	err := os.MkdirAll(dirPath, os.ModePerm)
 	if err != nil {

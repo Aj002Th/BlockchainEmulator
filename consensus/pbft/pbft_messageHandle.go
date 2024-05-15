@@ -13,11 +13,11 @@ func (self *ConsensusNode) handlePrePrepare(ppmsg *PrePrepare) {
 	// decode the message
 	flag := false
 	if digest := getDigest(ppmsg.RequestMsg); string(digest) != string(ppmsg.Digest) {
-		self.pl.Printf("S%dN%d : the digest is not consistent, so refuse to prepare. \n", self.ShardID, self.NodeID)
+		self.pl.Printf("N%d : the digest is not consistent, so refuse to prepare. \n", self.NodeID)
 	} else if self.sequenceID < ppmsg.SeqID {
 		self.requestPool[string(getDigest(ppmsg.RequestMsg))] = ppmsg.RequestMsg
 		self.height2Digest[ppmsg.SeqID] = string(getDigest(ppmsg.RequestMsg))
-		self.pl.Printf("S%dN%d : the Sequence id is not consistent, so refuse to prepare. \n", self.ShardID, self.NodeID)
+		self.pl.Printf("N%d : the Sequence id is not consistent, so refuse to prepare. \n", self.NodeID)
 	} else {
 		// do your operation in this interface
 		flag = self.pbftImpl.doPreprepare(ppmsg)
@@ -42,12 +42,12 @@ func (self *ConsensusNode) handlePrePrepare(ppmsg *PrePrepare) {
 }
 
 func (self *ConsensusNode) handlePrepare(pmsg *Prepare) {
-	self.pl.Printf("S%dN%d : received the Prepare ...\n", self.ShardID, self.NodeID)
+	self.pl.Printf("Node %d : received the Prepare ...\n", self.NodeID)
 
 	if _, ok := self.requestPool[string(pmsg.Digest)]; !ok {
-		self.pl.Printf("S%dN%d : doesn't have the digest in the requst pool, refuse to commit\n", self.ShardID, self.NodeID)
+		self.pl.Printf("N%d : doesn't have the digest in the requst pool, refuse to commit\n", self.NodeID)
 	} else if self.sequenceID < pmsg.SeqID {
-		self.pl.Printf("S%dN%d : inconsistent sequence ID, refuse to commit\n", self.ShardID, self.NodeID)
+		self.pl.Printf("N%d : inconsistent sequence ID, refuse to commit\n", self.NodeID)
 	} else {
 		// if needed more operations, implement interfaces
 		self.pbftImpl.doPrepare(pmsg)
@@ -68,7 +68,7 @@ func (self *ConsensusNode) handlePrepare(pmsg *Prepare) {
 		self.lock.Lock()
 		defer self.lock.Unlock()
 		if cnt >= specifiedcnt && !self.isCommitBroadcast[string(pmsg.Digest)] {
-			self.pl.Printf("S%dN%d : is going to commit\n", self.ShardID, self.NodeID)
+			self.pl.Printf("N%d : is going to commit\n", self.NodeID)
 			// generate commit and broadcast
 			c := Commit{
 				Digest:     pmsg.Digest,
@@ -87,7 +87,7 @@ func (self *ConsensusNode) handlePrepare(pmsg *Prepare) {
 
 func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 	// decode the message
-	self.pl.Printf("S%dN%d received the Commit from ...%d\n", self.ShardID, self.NodeID, cmsg.SenderNode.NodeID)
+	self.pl.Printf("Node %d received the Commit from ...%d\n", self.NodeID, cmsg.SenderNode.NodeID)
 	self.set2DMap(false, string(cmsg.Digest), cmsg.SenderNode)
 	cnt := 0
 	for range self.cntCommitConfirm[string(cmsg.Digest)] {
@@ -99,7 +99,7 @@ func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 	// the main node will not send the prepare message
 	required_cnt := int(2 * self.maliciousNums)
 	if cnt >= required_cnt && !self.isReply[string(cmsg.Digest)] {
-		self.pl.Printf("S%dN%d : has received 2f + 1 commits ... \n", self.ShardID, self.NodeID)
+		self.pl.Printf("Node %d : has received 2f + 1 commits ... \n", self.NodeID)
 		// if this node is left behind, so it need to requst blocks
 		if _, ok := self.requestPool[string(cmsg.Digest)]; !ok {
 			self.isReply[string(cmsg.Digest)] = true
@@ -121,7 +121,7 @@ func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 				log.Panic()
 			}
 
-			self.pl.Printf("S%dN%d : is now requesting message (seq %d to %d) ... \n", self.ShardID, self.NodeID, orequest.SeqStartHeight, orequest.SeqEndHeight)
+			self.pl.Printf("Node %d : is now requesting message (seq %d to %d) ... \n", self.NodeID, orequest.SeqStartHeight, orequest.SeqEndHeight)
 			MergeAndSend(CRequestOldrequest, bromyte, orequest.ServerNode.IPaddr, self.pl)
 		} else {
 			// implement interface
@@ -134,7 +134,7 @@ func (self *ConsensusNode) handleCommit(cmsg *Commit) {
 		// if this node is a main node, then unlock the sequencelock
 		if self.NodeID == self.view {
 			self.sequenceLock.Unlock()
-			self.pl.Printf("S%dN%d get sequenceLock unlocked...\n", self.ShardID, self.NodeID)
+			self.pl.Printf("Node %d get sequenceLock unlocked...\n", self.NodeID)
 		}
 	}
 }
