@@ -20,14 +20,14 @@ import (
 type PbftCommitteeModule struct {
 	batchDataNum int
 	dataTotalNum int
-	IpNodeTable  map[uint64]map[uint64]string
+	IpNodeTable  map[uint64]string
 	sl           *supervisor_log.SupervisorLog
 	Ss           *signal.StopSignal
 	csvPath      string
 	nowDataNum   int
 }
 
-func NewPbftCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *PbftCommitteeModule {
+func NewPbftCommitteeModule(Ip_nodeTable map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *PbftCommitteeModule {
 	return &PbftCommitteeModule{
 		csvPath:      csvFilePath,
 		dataTotalNum: dataNum,

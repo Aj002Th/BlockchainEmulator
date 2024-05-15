@@ -26,7 +26,7 @@ type ConsensusNode struct {
 	sb       stateStorage.StateStorage
 
 	pbftChainConfig *chain.Config
-	ipNodeTable     map[uint64]map[uint64]string
+	ipNodeTable     map[uint64]string
 	nodeNums        uint64
 	maliciousNums   uint64
 	view            uint64
@@ -73,7 +73,7 @@ func NewPbftNode(nodeID uint64, pcc *chain.Config) *ConsensusNode {
 	self.RunningNode = &Node{
 		NodeID:  nodeID,
 		ShardID: 0,
-		IPaddr:  self.ipNodeTable[0][nodeID],
+		IPaddr:  self.ipNodeTable[nodeID],
 	}
 
 	self.stop = false

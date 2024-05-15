@@ -35,7 +35,7 @@ type Supervisor struct {
 	waitOnce        func()
 	waitMasterReady chan struct{}
 
-	IpNodeTable       map[uint64]map[uint64]string
+	IpNodeTable       map[uint64]string
 	tcpLock           sync.Mutex
 	sl                *supervisor_log.SupervisorLog
 	Ss                *signal.StopSignal
