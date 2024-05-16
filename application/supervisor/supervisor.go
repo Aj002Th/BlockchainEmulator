@@ -142,7 +142,7 @@ func (d *Supervisor) Run() {
 
 	// 启动postApi
 	ps := webapi.NewPostServer(*d)
-	ps.Run()
+	go ps.Run()
 
 	// 起一个听的循环
 	go d.doAccept()
