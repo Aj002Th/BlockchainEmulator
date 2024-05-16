@@ -18,6 +18,7 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/supervisor_log"
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/webapi"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
+	"github.com/Aj002Th/BlockchainEmulator/data/base"
 	"github.com/Aj002Th/BlockchainEmulator/network"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 	sig "github.com/Aj002Th/BlockchainEmulator/signal"
@@ -108,6 +109,12 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 	d.blockPostedSignal.Emit(*m)
 }
 
+func (d *Supervisor) sendOneTx(tx base.Transaction) {
+	var txs = make([]base.Transaction, 0)
+	txs = append(txs, tx)
+	d.cmt.txSending(txs)
+}
+
 func (d *Supervisor) handleBookingMsg(m *pbft.BookingMsg) {
 	d.cntBooking++
 	d.bookings = append(d.bookings, *m)
@@ -132,6 +139,10 @@ func (d *Supervisor) Wait() {
 func (d *Supervisor) Run() {
 	webapi.GlobalProxy.Enqueue(webapi.Started)
 	meter.SupSideStart()
+
+	// 启动postApi
+	ps := webapi.NewPostServer(*d)
+	ps.Run()
 
 	// 起一个听的循环
 	go d.doAccept()

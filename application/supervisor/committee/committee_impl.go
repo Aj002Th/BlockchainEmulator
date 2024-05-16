@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/signal"
@@ -50,8 +51,13 @@ func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 	return &base.Transaction{}, false
 }
 
-// 把这一批交易发送给pbft主节点。
+var sendLk sync.Locker
+
+// 把这一批交易发送给pbft主节点。因为加锁，所以线程安全。
 func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
+	sendLk.Lock()
+	defer sendLk.Unlock()
+
 	txs := make([]*base.Transaction, 0)
 
 	// 把每个tx按顺序推进去
