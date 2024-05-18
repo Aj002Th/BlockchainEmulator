@@ -1,6 +1,3 @@
-// Supervisor is an abstract role in this simulator that may read txs, generate partition infos,
-// and handle history data.
-
 package supervisor
 
 import (
@@ -27,14 +24,6 @@ import (
 )
 
 type Supervisor struct {
-	IpNodeTable map[uint64]map[uint64]string // basic infos
-	// tcpLn             net.Listener                  // tcp control
-	tcpLock           sync.Mutex                    // listenStop bool
-	sl                *supervisor_log.SupervisorLog // logger module
-	Ss                *signal.StopSignal            // control components// to control the stop message sending
-	cmt               committee.CommitteeModule     // supervisor and committee components
-	blockPostedSignal sig.Signal[pbft.BlockInfoMsg] // 内部信号
-
 	txCompleteCount int
 	pbftItems       []webapi.PbftItem
 	OnNodeStart     sig.Signal[struct{}]
@@ -45,15 +34,23 @@ type Supervisor struct {
 
 	waitOnce        func()
 	waitMasterReady chan struct{}
+
+	nodeEndpointList  map[uint64]string
+	tcpLock           sync.Mutex
+	sl                *supervisor_log.SupervisorLog
+	Ss                *signal.StopSignal
+	cmt               committee.CommitteeModule
+	blockPostedSignal sig.Signal[pbft.BlockInfoMsg] // 内部信号
+
 }
 
 func NewSupervisor() *Supervisor {
 	d := &Supervisor{}
-	d.IpNodeTable = params.IPmapNodeTable
+	d.nodeEndpointList = params.NodeEndpointList
 	d.sl = supervisor_log.NewSupervisorLog()
 	d.Ss = signal.NewStopSignal(2 * int(1))
 	d.blockPostedSignal = sig.NewAsyncSignalImpl[pbft.BlockInfoMsg]("xx")
-	d.cmt = committee.NewPbftCommitteeModule(d.IpNodeTable, d.Ss, d.sl, params.FileInput, params.TotalDataSize, params.BatchSize)
+	d.cmt = committee.NewPbftCommitteeModule(d.nodeEndpointList, d.Ss, d.sl, params.FileInput, params.TotalDataSize, params.BatchSize)
 	d.txCompleteCount = 0
 
 	d.OnNodeStart = sig.GetSignalByName[struct{}]("OnNodeStart")
@@ -95,7 +92,6 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 
 	supervisor_log.DebugLog.Println("StopSignal Check")
 
-	// StopSignal check
 	if m.BlockBodyLength == 0 {
 		supervisor_log.DebugLog.Println("BodyLength == 0, Inc")
 		d.Ss.StopGapInc()
@@ -104,16 +100,12 @@ func (d *Supervisor) handleBlockInfoMsg(m *pbft.BlockInfoMsg) {
 		d.Ss.StopGapReset()
 	}
 
-	supervisor_log.DebugLog.Printf("received from shard %d in epoch %d.\n", m.SenderShardID, m.Epoch)
-
 	d.txCompleteCount += len(m.ExcutedTxs)
 	webapi.GlobalProxy.Enqueue(webapi.Computing(params.TotalDataSize, d.txCompleteCount))
 
 	pbftItem := webapi.PbftItem{TxpoolSize: int(m.TxpoolSize), Tx: len(m.ExcutedTxs)}
 	d.pbftItems = append(d.pbftItems, pbftItem)
-	// measure update
 	d.blockPostedSignal.Emit(*m)
-	// add codes here ...
 }
 
 func (d *Supervisor) handleBookingMsg(m *pbft.BookingMsg) {
@@ -146,20 +138,20 @@ func (d *Supervisor) Run() {
 
 	d.Wait()
 
-	// 无脑发送全部东西给主节点。
+	// 发送全部东西给主节点。
 	d.cmt.MsgSendingControl()
 	supervisor_log.DebugLog.Println("afterMsgSendingControl")
 
-	// 发完之后开始准备在恰当时机发送Stop信息。
-	for !d.Ss.GapEnough() { // wait all txs to be handled
+	// 发送完毕之后，开始准备在恰当时机发送Stop信息。
+	for !d.Ss.GapEnough() {
 		time.Sleep(time.Second)
 	}
-	// send stop message
+
 	d.sl.Slog.Println("Supervisor: now sending stop message to all nodes")
 
 	for nid := uint64(0); nid < uint64(params.NodeNum); nid++ {
 		supervisor_log.DebugLog.Printf("Sending a %v: %v\n", pbft.CStop, string([]byte("this is a stop message~")))
-		pbft.MergeAndSend(pbft.CStop, []byte("this is a stop message~"), d.IpNodeTable[0][nid], supervisor_log.DebugLog)
+		pbft.MergeAndSend(pbft.CStop, []byte("this is a stop message~"), d.nodeEndpointList[nid], supervisor_log.DebugLog)
 	}
 
 	d.sl.Slog.Println("Supervisor: now Closing. Now Generate Metrics Outputs.")
@@ -167,7 +159,6 @@ func (d *Supervisor) Run() {
 	d.generateOutputAndCleanUp()
 }
 
-// handle pbft. only one message to be handled now
 func (d *Supervisor) dispatchMessage(msg []byte) {
 	msgType, content := pbft.SplitMessage(msg)
 	if len(content) > 2000 {
@@ -240,7 +231,6 @@ func (d *Supervisor) doAccept() {
 	}
 }
 
-// close Supervisor, and record the data in .csv file
 func (d *Supervisor) generateOutputAndCleanUp() {
 	d.sl.Slog.Println("Closing...")
 

@@ -62,7 +62,7 @@ func (self *App) Run() {
 
 	supervisor_log.DebugLog = supervisor_log.NewLogger1()
 	logger.InitLogger()
-	// 配置初始化, 最关键的内容是 IPmapNodeTable
+	// 配置初始化, 最关键的内容是 nodeEndpointList
 	initGlobalConfig()
 
 	if self.args.isClient {

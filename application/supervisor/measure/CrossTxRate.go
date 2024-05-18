@@ -7,7 +7,6 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 )
 
-// CrossTxRate to test cross-transaction rate
 type CrossTxRate struct {
 	epochID       int
 	totTxNum      []float64
@@ -27,18 +26,17 @@ func (tctr *CrossTxRate) OutputMetricName() string {
 }
 
 func (tctr *CrossTxRate) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
-	if b.BlockBodyLength == 0 { // empty block
+	if b.BlockBodyLength == 0 {
 		return
 	}
 	epochID := b.Epoch
-	// extend
+
 	for tctr.epochID < epochID {
 		tctr.totTxNum = append(tctr.totTxNum, 0)
 		tctr.totCrossTxNum = append(tctr.totCrossTxNum, 0)
 		tctr.epochID++
 	}
 
-	// add inner-shard transaction and pbft2 transactions
 	for _, _ = range b.ExcutedTxs {
 		tctr.totTxNum[epochID] += 0.5
 		tctr.totCrossTxNum[epochID] += 0.5

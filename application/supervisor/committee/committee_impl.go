@@ -13,34 +13,31 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/application/supervisor/supervisor_log"
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 	"github.com/Aj002Th/BlockchainEmulator/data/base"
-	"github.com/Aj002Th/BlockchainEmulator/misc"
 	"github.com/Aj002Th/BlockchainEmulator/params"
 )
 
 type PbftCommitteeModule struct {
-	csvPath      string
-	dataTotalNum int
-	nowDataNum   int
-	batchDataNum int
-	IpNodeTable  map[uint64]map[uint64]string
-	sl           *supervisor_log.SupervisorLog
-	Ss           *signal.StopSignal // to control the stop message sending
+	batchDataNum     int
+	dataTotalNum     int
+	nodeEndpointList map[uint64]string
+	sl               *supervisor_log.SupervisorLog
+	Ss               *signal.StopSignal
+	csvPath          string
+	nowDataNum       int
 }
 
-func NewPbftCommitteeModule(Ip_nodeTable map[uint64]map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *PbftCommitteeModule {
+func NewPbftCommitteeModule(Ip_nodeTable map[uint64]string, Ss *signal.StopSignal, slog *supervisor_log.SupervisorLog, csvFilePath string, dataNum, batchNum int) *PbftCommitteeModule {
 	return &PbftCommitteeModule{
-		csvPath:      csvFilePath,
-		dataTotalNum: dataNum,
-		batchDataNum: batchNum,
-		nowDataNum:   0,
-		IpNodeTable:  Ip_nodeTable,
-		Ss:           Ss,
-		sl:           slog,
+		csvPath:          csvFilePath,
+		dataTotalNum:     dataNum,
+		batchDataNum:     batchNum,
+		nowDataNum:       0,
+		nodeEndpointList: Ip_nodeTable,
+		Ss:               Ss,
+		sl:               slog,
 	}
 }
 
-// transform, data to transaction
-// check whether it is a legal txs message. if so, read txs and put it into the txList
 func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 	if data[6] == "0" && data[7] == "0" && len(data[3]) > 16 && len(data[4]) > 16 && data[3] != data[4] {
 		val, ok := new(big.Int).SetString(data[8], 10)
@@ -55,41 +52,36 @@ func data2tx(data []string, nonce uint64) (*base.Transaction, bool) {
 
 // 把这一批交易发送给pbft主节点。
 func (rthm *PbftCommitteeModule) txSending(txlist []*base.Transaction) {
-	// the txs will be sent
-	sendToShard := make(map[uint64][]*base.Transaction)
+	txs := make([]*base.Transaction, 0)
 
 	// 把每个tx按顺序推进去
 	for idx := 0; idx <= len(txlist); idx++ {
 		// 到达InjectSpeed的时候就发一个InjectTxs给Node 0
 		// 同时清空队列列表。
 		if idx > 0 && (idx%params.InjectSpeed == 0 || idx == len(txlist)) {
-			// send to shard
 			it := pbft.InjectTxs{
-				Txs:       sendToShard[0],
-				ToShardID: 0,
+				Txs: txs,
 			}
 			itByte, err := json.Marshal(it)
 			if err != nil {
 				log.Panic(err)
 			}
-			pbft.MergeAndSend(pbft.CInject, itByte, rthm.IpNodeTable[0][0], supervisor_log.DebugLog)
+			pbft.MergeAndSend(pbft.CInject, itByte, rthm.nodeEndpointList[0], supervisor_log.DebugLog)
 
-			sendToShard = make(map[uint64][]*base.Transaction)
+			txs = make([]*base.Transaction, 0)
 			time.Sleep(time.Second)
 		}
 		if idx == len(txlist) {
 			break
 		}
 		tx := txlist[idx]
-		senderSID := uint64(misc.Addr2Shard(tx.Sender))
-		sendToShard[senderSID] = append(sendToShard[senderSID], tx)
+		txs = append(txs, tx)
 	}
 }
 
 // MsgSendingControl
 // Sup开启的时候同步地调一次。
 // 把tx读出来然后用txSending发出去。
-// read transactions, the Number of the transactions is - batchDataNum
 func (rthm *PbftCommitteeModule) MsgSendingControl() {
 	supervisor_log.DebugLog.Println("in MsgSendingControl")
 
@@ -99,7 +91,7 @@ func (rthm *PbftCommitteeModule) MsgSendingControl() {
 	}
 	defer txFile.Close()
 	reader := csv.NewReader(txFile)
-	txList := make([]*base.Transaction, 0) // save the txs in this epoch (round)
+	txList := make([]*base.Transaction, 0)
 
 	// 将csv里每batchNum行转换成tx的列表，并且同步地发送出去。
 	for {
@@ -119,11 +111,9 @@ func (rthm *PbftCommitteeModule) MsgSendingControl() {
 			rthm.nowDataNum++
 		}
 
-		// re-shard condition, enough edges
 		if len(txList) == rthm.batchDataNum || rthm.nowDataNum == rthm.dataTotalNum {
 			// 当 txList 的长度满足batchDataNum，或者到达顶峰，那就要发送。
 			rthm.txSending(txList)
-			// reset the variants about tx sending
 			txList = make([]*base.Transaction, 0) // 之后txList又恢复，从头再来。
 			rthm.Ss.StopGapReset()                // StopGap也要Reset。
 		}

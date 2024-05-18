@@ -8,12 +8,11 @@ import (
 	"github.com/Aj002Th/BlockchainEmulator/consensus/pbft"
 )
 
-// AvgTPS to test average TPS in this system
 type AvgTPS struct {
 	epochID       int
-	executedTxNum []float64   // record how many executed txs in an epoch, maybe the cross shard tx will be calculated as a 0.5 tx
-	startTime     []time.Time // record when the epoch starts
-	endTime       []time.Time // record when the epoch ends
+	executedTxNum []float64
+	startTime     []time.Time
+	endTime       []time.Time
 }
 
 func NewAvgTPS() *AvgTPS {
@@ -29,9 +28,8 @@ func (tat *AvgTPS) OutputMetricName() string {
 	return "Average_TPS"
 }
 
-// UpdateMeasureRecord add the number of executed txs, and change the time records
 func (tat *AvgTPS) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
-	if b.BlockBodyLength == 0 { // empty block
+	if b.BlockBodyLength == 0 {
 		return
 	}
 
@@ -39,7 +37,6 @@ func (tat *AvgTPS) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	earliestTime := b.ProposeTime
 	latestTime := b.CommitTime
 
-	// extend
 	for tat.epochID < epochid {
 		tat.executedTxNum = append(tat.executedTxNum, 0)
 		tat.startTime = append(tat.startTime, time.Time{})
@@ -58,7 +55,6 @@ func (tat *AvgTPS) UpdateMeasureRecord(b *pbft.BlockInfoMsg) {
 	}
 }
 
-// OutputRecord output the average TPS
 func (tat *AvgTPS) OutputRecord() (perEpochTPS []float64, totalTPS float64) {
 	perEpochTPS = make([]float64, tat.epochID+1)
 	totalTxNum := 0.0

@@ -32,36 +32,34 @@ const (
 
 var (
 	BlockRequest RequestType = "Block"
-	// add more types
-	// ...
 )
 
 type RawMessage struct {
-	Content []byte // the content of raw message, txs and blocks (most cases) included
+	Content []byte
 }
 
 type Request struct {
 	RequestType RequestType
-	Msg         RawMessage // request message
-	ReqTime     time.Time  // request time
+	Msg         RawMessage
+	ReqTime     time.Time
 }
 
 type PrePrepare struct {
-	RequestMsg *Request // the request message should be pre-prepared
-	Digest     []byte   // the digest of this request, which is the only identifier
+	RequestMsg *Request
+	Digest     []byte
 	SeqID      uint64
 }
 
 type Prepare struct {
-	Digest     []byte // To identify which request is prepared by this node
+	Digest     []byte
 	SeqID      uint64
-	SenderNode *Node // To identify who send this message
+	SenderNode *Node
 }
 
 type Commit struct {
-	Digest     []byte // To identify which request is prepared by this node
+	Digest     []byte
 	SeqID      uint64
-	SenderNode *Node // To identify who send this message
+	SenderNode *Node
 }
 
 type Reply struct {
@@ -73,30 +71,21 @@ type Reply struct {
 type RequestOldMessage struct {
 	SeqStartHeight uint64
 	SeqEndHeight   uint64
-	ServerNode     *Node // send this request to the server node
-	SenderNode     *Node
-}
-
-type SendOldMessage struct {
-	SeqStartHeight uint64
-	SeqEndHeight   uint64
-	OldRequest     []*Request
+	ServerNode     *Node
 	SenderNode     *Node
 }
 
 type InjectTxs struct {
-	Txs       []*base.Transaction
-	ToShardID uint64
+	Txs []*base.Transaction
 }
 
 type BlockInfoMsg struct {
 	BlockBodyLength int
-	ExcutedTxs      []*base.Transaction // txs which are excuted completely
+	ExcutedTxs      []*base.Transaction
 	Epoch           int
 
-	ProposeTime   time.Time // record the propose time of this block (txs)
-	CommitTime    time.Time // record the commit time of this block (txs)
-	SenderShardID uint64
+	ProposeTime time.Time
+	CommitTime  time.Time
 
 	TxpoolSize int
 }
@@ -115,8 +104,7 @@ type KeepAliveMsg struct {
 }
 
 type SeqIDinfo struct {
-	SenderShardID uint64
-	SenderSeq     uint64
+	SenderSeq uint64
 }
 
 func MergeMessage(msgType MessageType, content []byte) []byte {
